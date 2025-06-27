@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Raffle Draw</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #f0f0f0;
+        padding-top: 50px;
+      }
+      #invoice-display {
+        font-size: 3em;
+        margin: 20px 0;
+        color: #333;
+      }
+      #winner-display {
+        margin-top: 50px;
+        font-size: 2em;
+        color: green;
+        min-height: 50px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 1em;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎉 Raffle Draw 🎉</h1>
+    <div id="invoice-display">000000</div>
+    <button id="start-btn" onclick="startRaffle()">Start Raffle</button>
+    <div id="winner-display"></div>
+
+    <script>
+      const startButton = document.getElementById("start-btn");
+      const invoices = [
+        "INV1001",
+        "INV1002",
+        "INV1003",
+        "INV1004",
+        "INV1005",
+        "INV1006",
+        "INV1007",
+        "INV1008",
+        "INV1009",
+        "INV1010",
+      ];
+
+      const names = [
+        "Alice",
+        "Bob",
+        "Charlie",
+        "Diana",
+        "Ethan",
+        "Fiona",
+        "George",
+        "Hannah",
+        "Ivan",
+        "Julia",
+      ];
+
+      let interval;
+
+      function startRaffle() {
+        startButton.disabled = true;
+        document.getElementById("winner-display").textContent = "";
+        let counter = 0;
+        let maxIterations = 50;
+        interval = setInterval(() => {
+          const randomIndex = Math.floor(Math.random() * invoices.length);
+          document.getElementById("invoice-display").textContent =
+            invoices[randomIndex];
+          counter++;
+          if (counter >= maxIterations) {
+            clearInterval(interval);
+            showWinner();
+          }
+        }, 100);
+      }
+
+      function showWinner() {
+        let sliderIndex = 0;
+        let maxSlide = 20;
+        const winnerIndex = Math.floor(Math.random() * names.length);
+        const winnerName = names[winnerIndex];
+        const winnerDisplay = document.getElementById("winner-display");
+
+        const nameSlider = setInterval(() => {
+          const randomName = names[Math.floor(Math.random() * names.length)];
+          winnerDisplay.textContent = "🎯 " + randomName;
+          sliderIndex++;
+          if (sliderIndex >= maxSlide) {
+            clearInterval(nameSlider);
+            winnerDisplay.textContent = `🏆 Winner: ${winnerName}`;
+            startButton.disabled = false;
+          }
+        }, 100);
+      }
+    </script>
+  </body>
+</html>
