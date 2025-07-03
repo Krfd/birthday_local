@@ -1,0 +1,114 @@
+body {
+    background: linear-gradient(135deg, #e0eafc, #cfdef3);
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: sans-serif;
+}
+
+#invoice-display {
+    font-size: 3em;
+    color: #333;
+}
+
+.digit.roll {
+    animation: rollDigit 0.3s ease-in-out;
+}
+
+.digit.rolling {
+    animation: rollBounce 0.2s ease-out;
+    border: 2px solid #007bff !important;
+}
+
+@keyframes rollBounce {
+    0% {
+        transform: translateY(-30%);
+    }
+
+    50% {
+        transform: translateY(10%);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.digit.locked {
+    animation: bounceIn 0.4s ease;
+    border: 2px solid #28a745 !important;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: translateY(-100%) scale(1.2);
+        opacity: 0;
+    }
+
+    60% {
+        transform: translateY(10%) scale(1.1);
+        opacity: 1;
+    }
+
+    80% {
+        transform: translateY(-5%) scale(1.05);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+#winner-display {
+    margin-top: 50px;
+    font-size: 3em;
+    color: green;
+    min-height: 50px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.chance-display {
+    display: none;
+}
+
+.digit {
+    width: 70px;
+    height: 90px;
+    background: #f0f0f0;
+    /* slightly darker than before for more contrast */
+    border-radius: 20px;
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.1),
+        /* darker bottom-right shadow */
+        -6px -6px 12px rgba(255, 255, 255, 0.6);
+    /* lighter top-left highlight */
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    transition: all 0.2s ease;
+    border: 2px solid #007bff !important;
+}
+
+.digit:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+.digit:active {
+    box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+}

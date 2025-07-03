@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>IAP - Raffle Promo</title>
+    <link rel="icon" href="assets/img/logo.jpg" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="d-flex gap-4">
+        <img
+          src="assets/img/logo.jpg"
+          alt="Logo"
+          style="height: 90px; width: auto"
+          class="rounded-3"
+        />
+        <h1 class="fw-bold display-1" style="color: #990000">
+          IMPERIAL APPLIANCE PLAZA
+        </h1>
+      </div>
+      <h2 class="fw-semibold display-4 text-primary">RAFFLE PROMO</h2>
+      <div class="mt-5">
+        <h2 class="fw-semibold">TICKET NUMBER</h2>
+        <div id="invoice-display">
+          <span class="digit border rounded-3 shadow-sm px-3">0</span>
+          <span class="digit border rounded-3 shadow-sm px-3">0</span>
+          <span class="digit border rounded-3 shadow-sm px-3">0</span>
+          <span class="digit border rounded-3 shadow-sm px-3">0</span>
+        </div>
+      </div>
+      <div id="winner-display" aria-live="assertive">
+        <span id="winner-label"></span>
+        <span id="winner-name"></span>
+      </div>
+
+      <div class="mt-5 chance-display">
+        <h4>MATCHING TICKETS</h4>
+        <div id="matchingTickets" class="text-success fs-3"></div>
+      </div>
+    </div>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/canvas-confetti.js"></script>
+    <script type="module" src="js/data.js"></script>
+    <script type="module" src="js/start.js"></script>
+  </body>
+</html>
