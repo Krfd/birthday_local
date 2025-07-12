@@ -5,7 +5,6 @@ ini_set('display_errors', 1);
 
 include("config/connection.php");
 
-// Get the raw POST data
 $data = json_decode(file_get_contents("php://input"), true);
 
 try {
@@ -14,7 +13,6 @@ try {
         $winnerName = $data['winnerName'];
         $winnerTicket = $data['winnerTicket'];
 
-        // INSERT WINNER
         $winner = $conn->prepare("INSERT INTO winners (winner, winningTicket, dateWon) VALUES (:winner, :winningTicket, SYSDATETIME())");
         $winner->bindParam(":winner", $winnerName);
         $winner->bindParam(":winningTicket", $winnerTicket);

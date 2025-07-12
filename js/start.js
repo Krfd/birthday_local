@@ -36,8 +36,16 @@ fetch("api/getEntries.php")
       excludedCustomerNames = data.excludedCustomerNames;
     }
 
+    // ORIGINAl
     // ✅ Apply customer filter before creating invoices/names
-    users = data.filter((u) => !excludedCustomerNames.includes(u.customerName));
+    // users = data.filter((u) => !excludedCustomerNames.includes(u.customerName));
+
+    users = data
+      .filter((u) => !excludedCustomerNames.includes(u.customerName))
+      .map((u) => ({
+        customerName: u.customerName,
+        ticketNumbers: u.ticketNumbers,
+      }));
 
     invoices = users.flatMap((user) => user.ticketNumbers.map(String));
     names = users.map((user) => user.customerName);
@@ -91,18 +99,6 @@ function startRaffle() {
   document.getElementById("winner-display").textContent = "";
   finalInvoice = ""; // Make sure to reset it when starting a new roll
 
-  // // Check if there are no tickets available
-  // const availableInvoices = invoices.filter(
-  //   (ticket) => !excludedTicketNumbers.has(ticket)
-  // );
-
-  // // Check if there are no tickets available
-  // if (invoices.length === 0) {
-  //   alert("No tickets available for the raffle.");
-  //   isRolling = false; // Reset the rolling state
-  //   return;
-  // }
-
   const availableInvoices = invoices.filter(
     (ticket) => !excludedTicketNumbers.has(ticket)
   );
@@ -142,9 +138,6 @@ function startRaffle() {
   document.getElementById("matchingTickets").textContent = "0";
 
   if (!finalInvoice) {
-    // const winnerIndex =
-    //   crypto.getRandomValues(new Uint32Array(1))[0] % invoices.length;
-    // finalInvoice = invoices[winnerIndex];
     const winnerIndex =
       crypto.getRandomValues(new Uint32Array(1))[0] % availableInvoices.length;
     finalInvoice = availableInvoices[winnerIndex];
@@ -173,176 +166,6 @@ function startRaffle() {
     let rollCount = 0;
 
     let lastRandomDigit = -1;
-
-    // ORIGINAL
-    // function slowRoll() {
-    //   if (rollCount >= totalRolls) {
-    //     digitEl.textContent = finalDigit;
-
-    //     digitEl.classList.remove("rolling");
-    //     digitEl.classList.remove("locked");
-    //     void digitEl.offsetWidth;
-    //     digitEl.classList.add("locked");
-
-    //     const finalInvoiceStr = finalInvoice
-    //       .toString()
-    //       .padStart(digits.length, "0");
-    //     const revealedDigits = finalInvoiceStr.slice(currentDigit);
-    //     const matchCount = invoices.filter((inv) =>
-    //       inv.endsWith(revealedDigits)
-    //     ).length;
-    //     document.getElementById(
-    //       "matchingTickets"
-    //     ).textContent = `${matchCount}`;
-
-    //     currentDigit--;
-    //     setTimeout(rollNextDigit, 1000);
-    //     return;
-    //   }
-
-    //   let randomDigit;
-    //   do {
-    //     randomDigit = Math.floor(Math.random() * 10);
-    //   } while (randomDigit === lastRandomDigit);
-
-    //   lastRandomDigit = randomDigit; // Save for next round
-
-    //   digitEl.textContent = randomDigit;
-    //   digitEl.classList.remove("rolling");
-    //   digitEl.style.animation = "none";
-    //   digitEl.offsetHeight;
-    //   digitEl.style.animation = "";
-    //   digitEl.classList.add("rolling");
-
-    //   rollCount++;
-
-    //   let delay;
-    //   if (rollCount < totalRolls * 0.6) {
-    //     delay = 40;
-    //   } else if (rollCount < totalRolls * 0.8) {
-    //     delay = 80;
-    //   } else {
-    //     delay = 400;
-    //   }
-
-    //   setTimeout(slowRoll, delay);
-    // }
-
-    // CHAT GPT
-    // function slowRoll() {
-    //   if (rollCount >= totalRolls) {
-    //     digitEl.textContent = finalDigit;
-
-    //     digitEl.classList.remove("rolling");
-    //     digitEl.classList.remove("locked");
-    //     void digitEl.offsetWidth;
-    //     digitEl.classList.add("locked");
-
-    //     const finalInvoiceStr = finalInvoice
-    //       .toString()
-    //       .padStart(digits.length, "0");
-    //     const revealedDigits = finalInvoiceStr.slice(currentDigit);
-    //     const matchCount = invoices.filter((inv) =>
-    //       inv.endsWith(revealedDigits)
-    //     ).length;
-    //     document.getElementById(
-    //       "matchingTickets"
-    //     ).textContent = `${matchCount}`;
-
-    //     currentDigit--;
-    //     setTimeout(rollNextDigit, 3000);
-    //     return;
-    //   }
-
-    //   // 🔁 Incrementing digits from 0-9, then loop
-    //   const nextDigit = rollCount % 10;
-    //   digitEl.textContent = nextDigit;
-
-    //   digitEl.classList.remove("rolling");
-    //   digitEl.style.animation = "none";
-    //   digitEl.offsetHeight;
-    //   digitEl.style.animation = "";
-    //   digitEl.classList.add("rolling");
-
-    //   rollCount++;
-
-    //   // ⏱️ Slower delay toward the end
-    //   let delay;
-    //   const progress = rollCount / totalRolls;
-
-    //   if (progress < 0.6) {
-    //     delay = 50;
-    //   } else if (progress < 0.85) {
-    //     delay = 150;
-    //   } else {
-    //     delay = 400; // Final few rolls are slow
-    //   }
-
-    //   setTimeout(slowRoll, delay);
-    // }
-
-    // NOT SO DRAMATIC
-    // function slowRoll() {
-    //   if (rollCount >= totalRolls) {
-    //     // Once we're done with all the rolls, set the final digit and stop the rolling
-    //     digitEl.textContent = finalDigit;
-
-    //     // Lock the digit in place and stop animation
-    //     digitEl.classList.remove("rolling");
-    //     digitEl.classList.remove("locked");
-    //     void digitEl.offsetWidth;
-    //     digitEl.classList.add("locked");
-
-    //     // Now, check for how many tickets match the revealed digits
-    //     const finalInvoiceStr = finalInvoice
-    //       .toString()
-    //       .padStart(digits.length, "0");
-    //     const revealedDigits = finalInvoiceStr.slice(currentDigit);
-    //     const matchCount = invoices.filter((inv) =>
-    //       inv.endsWith(revealedDigits)
-    //     ).length;
-    //     document.getElementById(
-    //       "matchingTickets"
-    //     ).textContent = `${matchCount}`;
-
-    //     currentDigit--;
-    //     setTimeout(rollNextDigit, 3000); // Add a break before rolling the next digit
-    //     return;
-    //   }
-
-    //   // 🔁 Incrementing digits from 0-9, then loop
-    //   const nextDigit = rollCount % 10;
-    //   digitEl.textContent = nextDigit;
-
-    //   // Reset the rolling animation to start a fresh cycle
-    //   digitEl.classList.remove("rolling");
-    //   digitEl.style.animation = "none";
-    //   digitEl.offsetHeight; // Trigger a reflow
-    //   digitEl.style.animation = "";
-    //   digitEl.classList.add("rolling");
-
-    //   rollCount++;
-
-    //   // ⏱️ Slow down as we approach the final rolls
-    //   let delay;
-    //   const progress = rollCount / totalRolls;
-
-    //   // **Speed up early on (start fast)**
-    //   if (progress < 0.4) {
-    //     delay = 50; // Fast start
-    //   }
-    //   // **Slow down gradually**
-    //   else if (progress < 0.7) {
-    //     delay = 150; // Slower roll as we approach the final digits
-    //   }
-    //   // **Very slow towards the end**
-    //   else {
-    //     delay = 400; // Slow roll just before the final digit
-    //   }
-
-    //   // Use `setTimeout` to adjust the speed of each roll
-    //   setTimeout(slowRoll, delay);
-    // }
 
     function slowRoll() {
       if (rollCount >= totalRolls) {
@@ -448,106 +271,6 @@ function submitWinnerDetails(winnerName, winnerTicket) {
       alert("There was an error submitting the winner details.");
     });
 }
-
-// ORIGINAL
-// function showWinner() {
-//   const winnerTicket = parseInt(finalInvoice);
-//   const winnerUser = users.find((user) =>
-//     user.ticketNumbers.map(String).includes(String(winnerTicket))
-//   );
-
-//   const winnerName = winnerUser ? winnerUser.customerName : "Unknown";
-
-//   if (winnerUser) {
-//     // Exclude all this user's tickets
-//     winnerUser.ticketNumbers.forEach((ticket) =>
-//       excludedTicketNumbers.add(String(ticket))
-//     );
-
-//     // Exclude this customer
-//     excludedCustomerNames.push(winnerUser.customerName);
-
-//     // Update global `users`, `invoices`, `names`
-//     users = users.filter((u) => u.customerName !== winnerUser.customerName);
-//     invoices = invoices.filter(
-//       (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket))
-//     );
-//     names = users.map((u) => u.customerName);
-//   }
-
-//   const winnerDisplay = document.getElementById("winner-display");
-//   let sliderIndex = 0;
-//   let maxSlide = 20;
-
-//   const nameSlider = setInterval(() => {
-//     const randomName = names[Math.floor(Math.random() * names.length)];
-//     winnerDisplay.innerHTML = `Winner<br><strong>${randomName}</strong>`;
-
-//     sliderIndex++;
-//     if (sliderIndex >= maxSlide) {
-//       clearInterval(nameSlider);
-//       winnerDisplay.innerHTML = `Winner<br><strong>${winnerName}</strong>`;
-//       showConfetti(winnerName, winnerTicket);
-
-//       submitWinnerDetails(winnerName, winnerTicket);
-//     }
-//   }, 100);
-// }
-
-// CHATGPT
-// function showWinner() {
-//   const winnerTicket = parseInt(finalInvoice);
-//   const winnerUser = users.find((user) =>
-//     user.ticketNumbers.map(String).includes(String(winnerTicket))
-//   );
-
-//   // Ensure winnerName is valid before proceeding
-//   const winnerName = winnerUser ? winnerUser.customerName : "Unknown";
-
-//   // Ensure winnerName is not undefined in case of any async timing issue
-//   if (!winnerName || winnerName === "Unknown") {
-//     console.error("Error: Winner's name is undefined or invalid.");
-//     return; // Stop if no valid winner is found
-//   }
-
-//   if (winnerUser) {
-//     // Exclude all this user's tickets
-//     winnerUser.ticketNumbers.forEach((ticket) =>
-//       excludedTicketNumbers.add(String(ticket))
-//     );
-
-//     // Exclude this customer
-//     excludedCustomerNames.push(winnerUser.customerName);
-
-//     // Update global `users`, `invoices`, `names`
-//     users = users.filter((u) => u.customerName !== winnerUser.customerName);
-//     invoices = invoices.filter(
-//       (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket))
-//     );
-//     names = users.map((u) => u.customerName);
-//   }
-
-//   const winnerDisplay = document.getElementById("winner-display");
-//   let sliderIndex = 0;
-//   let maxSlide = 20;
-
-//   const nameSlider = setInterval(() => {
-//     // Only choose a random name if there's at least one available invoice
-//     if (names.length > 0) {
-//       const randomName = names[Math.floor(Math.random() * names.length)];
-//       winnerDisplay.innerHTML = `Winner<br><strong>${randomName}</strong>`;
-//     }
-
-//     sliderIndex++;
-//     if (sliderIndex >= maxSlide) {
-//       clearInterval(nameSlider);
-//       winnerDisplay.innerHTML = `Winner<br><strong>${winnerName}</strong>`;
-//       showConfetti(winnerName, winnerTicket);
-
-//       submitWinnerDetails(winnerName, winnerTicket);
-//     }
-//   }, 100);
-// }
 
 function showWinner() {
   const winnerTicket = parseInt(finalInvoice);

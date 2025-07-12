@@ -9,11 +9,13 @@ $user_name = trim(htmlspecialchars($_POST['username']));
 
 // CUSTOMER DETAILS
 
+$docId = trim(htmlspecialchars($_POST['docId']));
 $first = trim(htmlspecialchars($_POST['first']));
 $last = trim(htmlspecialchars($_POST['last']));
 $fname = trim(htmlspecialchars($_POST['fname']));
 $lname = trim(htmlspecialchars($_POST['lname']));
 $branch = trim(htmlspecialchars($_POST['branch']));
+$new_branch = trim(htmlspecialchars($_POST['new_branch']));
 $inv = trim(htmlspecialchars($_POST['inv']));
 
 try {
@@ -27,13 +29,24 @@ try {
 
     if ($getCustomer) {
         foreach ($getCustomer as $customer) {
-            $update = $conn->prepare("UPDATE responses SET First_Name = :firstname, Last_Name = :lastname WHERE First_Name = :first AND Last_Name = :last AND branch = :branch");
-            $update->bindParam(":firstname", $fname);
-            $update->bindParam(":lastname", $lname);
-            $update->bindParam(":first", $first);
-            $update->bindParam(":last", $last);
-            $update->bindParam(":branch", $branch);
-            $update->execute();
+
+            try {
+                $update = $conn->prepare("UPDATE responses SET Branch_Purchased = :branch, First_Name = :firstname, Last_Name = :lastname WHERE id = :id");
+                $update->bindParam(":branch", $new_branch);
+                $update->bindParam(":firstname", $fname);
+                $update->bindParam(":lastname", $lname);
+                $update->bindParam(":id", $docId);
+                $update->execute();
+            } catch (PDOException $e) {
+                errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
+            }
+
+            $updateFindings = $conn->prepare("UPDATE mismatch SET Branch = :branch, First_Name = :firstname, Last_Name = :lastname WHERE docId = :docId");
+            $updateFindings->bindParam(":branch", $new_branch);
+            $updateFindings->bindParam(":firstname", $fname);
+            $updateFindings->bindParam(":lastname", $lname);
+            $updateFindings->bindParam(":docId", $docId);
+            $updateFindings->execute();
         }
     }
 
@@ -41,11 +54,16 @@ try {
     $newCustomerName = $fname . ' ' . $lname;
 
     // INSERT USER LOGS
-    $log = $conn->prepare("INSERT INTO logs (user_id, customer_name, new_customer_name, customer_inv, username, dept, modified)
-    VALUES (:user_id, :customer_name, :new_customer_name, :customer_inv, :username, :dept, SYSDATETIME())");
+    $log = $conn->prepare("INSERT INTO logs (user_id, customer_branch, customer_name, new_customer_name, customer_inv, username, dept, modified)
+    VALUES (:user_id, :customer_branch, :customer_name, :new_customer_name, :customer_inv, :username, :dept, SYSDATETIME())");
     $log->bindParam(":user_id", $user_id);
+    $log->bindParam(":customer_branch", $new_branch);
     $log->bindParam(":customer_name", $customerName);
-    $log->bindParam(":new_customer_name", $newCustomerName);
+    if ($company && !empty($company)) {
+        $log->bindParam(":new_customer_name", $company);
+    } else {
+        $log->bindParam(":new_customer_name", $newCustomerName);
+    }
     $log->bindParam(":customer_inv", $inv);
     $log->bindParam(":username", $user_name);
     $log->bindParam(":dept", $user_dept);

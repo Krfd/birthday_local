@@ -21,15 +21,6 @@ try {
 
     if (!$exist) {
         $readable_pass = 'iap' . $dept;
-
-        // Define log file path
-        $log_file = 'log.txt';
-
-        // Log message
-        $log_message = "Generated readable_pass: " . $readable_pass . PHP_EOL;
-
-        // Write to the file
-        file_put_contents($log_file, $log_message, FILE_APPEND);
         $password = password_hash('iap' . $dept, PASSWORD_DEFAULT);
 
         $insert = $conn->prepare("INSERT INTO users (username, password, dept, disabled, isAdmin, created) 

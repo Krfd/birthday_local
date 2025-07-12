@@ -34,7 +34,7 @@ function generateInvoiceNumber($index)
 try {
     $stmt = $conn->prepare("INSERT INTO customers (inv, inv_amount, branch, cust_name) VALUES (?, ?, ?, ?)");
 
-    for ($i = 1; $i <= 50; $i++) {
+    for ($i = 1; $i <= 10; $i++) {
         $inv = generateInvoiceNumber($i);
 
         // Generate amount between 1000 and 40000
@@ -46,7 +46,7 @@ try {
         $stmt->execute([$inv, $inv_amount, $branch, $cust_name]);
     }
 
-    echo "✅ 50 dummy customers inserted successfully.";
+    echo "✅ 10 dummy customers inserted successfully.";
 } catch (PDOException $e) {
     errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
     echo "❌ Error inserting data: " . $e->getMessage();

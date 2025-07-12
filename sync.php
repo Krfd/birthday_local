@@ -1,5 +1,6 @@
 <?php
 
+header('Content-Type: application/json');
 // UPDATED
 $stateFile = 'raffle_state.json';
 
@@ -18,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (file_exists($stateFile)) {
-    header('Content-Type: application/json');
     echo file_get_contents($stateFile);
 } else {
     echo json_encode(["status" => "idle", "excludedTicketNumbers" => []]);

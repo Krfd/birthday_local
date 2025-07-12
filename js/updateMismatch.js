@@ -12,7 +12,7 @@ $(".modal").on("submit", "form[id^='updateMismatch_']", function (e) {
           Swal.fire({
             icon: "success",
             iconColor: "#28a745",
-            title: "User has been renamed",
+            title: "Customer has been updated",
             timer: 2000,
             timerProgressBar: true,
             showConfirmButton: false,

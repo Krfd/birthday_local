@@ -31,6 +31,12 @@
       width: 400px !important;
       max-width: 400px !important;
     }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    }
   </style>
 </head>
 
@@ -45,7 +51,6 @@
     <div class="mt-5">
       <h2 class="fw-semibold">E-TICKET NUMBER</h2>
       <div id="invoice-display">
-        <span class="digit border rounded-3 shadow-sm px-3">?</span>
         <span class="digit border rounded-3 shadow-sm px-3">?</span>
         <span class="digit border rounded-3 shadow-sm px-3">?</span>
         <span class="digit border rounded-3 shadow-sm px-3">?</span>

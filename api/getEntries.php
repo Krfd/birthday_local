@@ -3,17 +3,16 @@
 include("../config/connection.php");
 
 try {
-    // Fetch data from the database
     $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM raffle_entries");
-    $stmt->execute(); // Ensure the statement is executed
+    $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Prepare the users array
     $users = [];
 
     foreach ($rows as $row) {
         $name = trim($row['First_Name'] . ' ' . $row['Last_Name']);
         $ticket = (int)$row['Ticket_Number'];
+        // $company = $row['Company'] ?? '';
 
         if (!isset($users[$name])) {
             $users[$name] = [];
@@ -22,10 +21,10 @@ try {
     }
 
     $result = [];
-    foreach ($users as $name => $tickets) {
+    foreach ($users as $name => $ticket) {
         $result[] = [
             'customerName' => $name,
-            'ticketNumbers' => $tickets
+            'ticketNumbers' => $ticket
         ];
     }
 
