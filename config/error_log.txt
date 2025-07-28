@@ -1,0 +1,2 @@
+[2025-07-28 11:25:04] Error: [2] Undefined array key "id" in C:\xampp\htdocs\raffle\config\config.php on line 36
+[2025-07-28 11:25:04] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\raffle\config\config.php on line 36

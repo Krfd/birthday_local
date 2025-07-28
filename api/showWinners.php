@@ -8,7 +8,6 @@ include("../config/connection.php");
 
 header('Content-Type: application/json');
 
-
 try {
 
     $winners = $conn->prepare("SELECT * FROM winners ORDER BY id DESC");

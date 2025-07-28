@@ -85,12 +85,15 @@ try {
         'SILANG CAVITE' => 'SILANG'
     ];
 
-    // Prepare SQL query for checking if record exists
-    $checkStmt = $conn->prepare("SELECT COUNT(*) FROM responses WHERE Invoice_Number = :invoice_number AND Branch_Purchased = :branch");
-
-    // Prepare SQL query for insertion into 'responses' table
-    $stmt = $conn->prepare("INSERT INTO responses (Timestamp, Branch_Purchased, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Postal_Address) 
-                            VALUES (:timestamp, :branch, :first_name, :last_name, :invoice_number, :mobile_number, :email, :postal_address)");
+    $stmt = $conn->prepare("INSERT INTO responses (
+    Timestamp, Branch_Purchased, First_Name, Last_Name, Suffix,
+    Invoice_Number, Mobile_Number, Email, Postal_Address, Ref,
+    Validated, InValid, Cancel, SMS
+) VALUES (
+    :timestamp, :branch, :first_name, :last_name, :suffix,
+    :invoice_number, :mobile_number, :email, :postal_address, :ref,
+    :validated, :invalid, :cancel, :sms
+)");
 
     // Loop through each row and insert if not exists
     foreach ($rows as $row) {
@@ -113,32 +116,36 @@ try {
         $original_branch = trim($columns[1]);
         $normalized_branch = $branch_map[$original_branch] ?? $original_branch;
 
-        // Check if invoice_number already exists in the database
-        $checkStmt->execute([
-            ':invoice_number' => $columns[4],
-            ':branch' => $normalized_branch
-        ]);
+        $email = strtolower(trim($columns[6]));
+
+        $original_ref = "$original_branch | {$columns[5]} | " . mb_strtoupper("{$columns[2]} {$columns[3]}", 'UTF-8');
+
+
+        $checkStmt = $conn->prepare("SELECT COUNT(*) FROM responses WHERE Ref = :ref");
+        $checkStmt->execute([':ref' => $original_ref]);
 
         $existingCount = $checkStmt->fetchColumn();
 
-        // If invoice_number already exists, skip the row
         if ($existingCount > 0) {
-            echo "Skipping record with Invoice Number: {$columns[4]} and Branch: {$original_branch} (Already Exists)\n";
+            echo "Skipping duplicate: $original_ref\n";
             continue;
         }
 
-        $email = strtolower(trim($columns[6]));
-
-        // Map CSV columns to database columns
         $stmt->execute([
             ':timestamp' => $columns[0],
             ':branch' => $normalized_branch,
-            ':first_name' => strtoupper($columns[2]),
-            ':last_name' => strtoupper($columns[3]),
+            ':first_name' => mb_strtoupper($columns[2], 'UTF-8'),
+            ':last_name' => mb_strtoupper($columns[3], 'UTF-8'),
+            ':suffix' => isset($columns[14]) ? mb_strtoupper(trim($columns[14]), 'UTF-8') : '',
             ':invoice_number' => $columns[4],
             ':mobile_number' => $columns[5],
-            ':email' => $email,
-            ':postal_address' => $columns[7],
+            ':email' => strtolower(trim($columns[6])),
+            ':postal_address' => mb_strtoupper($columns[7], 'UTF-8'),
+            ':ref' => $original_ref,
+            ':validated' => 'N',
+            ':invalid' => 'N',
+            ':cancel' => 'N',
+            ':sms' => 'N'
         ]);
 
         echo "✅ Data inserted for Invoice Number: {$columns[4]} (Branch: {$normalized_branch})\n";

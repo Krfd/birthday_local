@@ -33,7 +33,7 @@ $pass = htmlspecialchars($_POST['password']);
 
 try {
 
-    $query = $conn->prepare("SELECT id, username, password, disabled, isAdmin FROM users WHERE username = :username");
+    $query = $conn->prepare("SELECT id, username, password, dept, disabled, isAdmin FROM users WHERE username = :username");
     $query->bindParam(":username", $name);
     $query->execute();
 
@@ -50,9 +50,6 @@ try {
                         $_SESSION['id'] = $row->id;
                         echo "admin";
                         exit();
-                    } elseif ($row->username != $name) {
-                        echo "invalid";
-                        exit();
                     } else {
                         if ($name === "controller1" && $row->isAdmin == 0) {
                             $_SESSION['id'] = $row->id;
@@ -61,6 +58,10 @@ try {
                         } else if ($name === "game1" && $row->isAdmin == 0) {
                             $_SESSION['id'] = $row->id;
                             echo "game";
+                            exit();
+                        } else if ($row->username === $name && $row->dept === "AR") {
+                            $_SESSION['id'] = $row->id;
+                            echo "ar";
                             exit();
                         } else if ($row->username === $name) {
                             $_SESSION['id'] = $row->id;

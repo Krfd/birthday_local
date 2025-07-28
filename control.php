@@ -72,6 +72,29 @@
   <button id="logout-btn" class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
     <i class="bi bi-box-arrow-left"></i>
   </button>
+  <div class="container d-flex justify-content-center mb-5 w-auto p-3 bg-primary-subtle shadow rounded-1">
+    <div class="d-flex flex-column gap-1" style="width: 550px">
+      <div class="d-flex align-items-center gap-3">
+        <label for="location" class="form-label fw-semibold">Location: </label>
+        <select name="region" id="region" class="form-select w-75 ms-auto" required>
+          <option value="" selected>Select Region</option>
+          <option value="LUZON">Luzon</option>
+          <option value="VISAYAS">Visayas</option>
+          <option value="MINDANAO">Mindanao</option>
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <label for="category" class="form-label fw-semibold">Prize Category: </label>
+        <select name="category" id="category" class="form-select w-75 ms-auto" required>
+          <option value="" selected>Select Category</option>
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <label for="prize" class="form-label fw-semibold">Prize: </label>
+        <input type="text" class="form-control w-75 ms-auto" name="prize" id="prize" readonly>
+      </div>
+    </div>
+  </div>
   <div class="container">
     <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
   </div>
@@ -84,6 +107,14 @@
     <div class="mt-5">
       <h1 class="fw-bold text-success display-5">WINNING BOARD</h1>
       <div class="table-responsive">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+          <div>
+            <button id="downloadCSV" class="btn btn-success px-4 fs-5 rounded-4">
+              Download CSV
+            </button>
+          </div>
+          <div id="winnerTable_filter" class="dataTables_filter"></div> <!-- DataTables will auto-populate this -->
+        </div>
         <table
           class="table datatables table-hover mt-3 text-center table-success table-striped"
           id="winnerTable">
@@ -92,6 +123,9 @@
               <th>#</th>
               <th>E-Ticket</th>
               <th>CUSTOMER</th>
+              <th>AREA</th>
+              <th>CATEGORY</th>
+              <th>PRIZE</th>
               <th>TIMESTAMP</th>
             </tr>
           </thead>
@@ -106,14 +140,70 @@
   <script src="js/bootstrap.bundle.min.js"></script>
 
   <script>
+    const region = document.getElementById('region');
+    const category = document.getElementById('category');
+    const prize = document.getElementById('prize');
+    const startBtn = document.getElementById('start-btn');
+
+    async function fetchCategories() {
+      const loc = region.value;
+      category.innerHTML = '<option value="" selected>Select Category</option>';
+      prize.value = '';
+      checkInputs();
+
+      if (loc) {
+        const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`);
+        const categories = await res.json();
+
+        categories.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat;
+          option.textContent = cat;
+          category.appendChild(option);
+        });
+      }
+    }
+
+    async function fetchPrize() {
+      const loc = region.value;
+      const cat = category.value;
+
+      if (loc && cat) {
+        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`);
+        const data = await res.json();
+
+        if (data && data.product) {
+          prize.value = `${data.product} - ${data.brand} (${data.model})`;
+        } else {
+          prize.value = '';
+        }
+      } else {
+        prize.value = '';
+      }
+
+      checkInputs();
+    }
+
+    function checkInputs() {
+      const isValid = region.value && category.value && prize.value.trim();
+      startBtn.disabled = !isValid;
+    }
+
+    region.addEventListener('change', fetchCategories);
+    category.addEventListener('change', fetchPrize);
+    prize.addEventListener('input', checkInputs);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      startBtn.disabled = true;
+    });
+
     const winnerTable = new DataTable("#winnerTable", {
       pageLength: 8,
       lengthChange: false,
       columnDefs: [{
-          targets: "_all",
-          className: "text-center"
-        }, // Applies to all columns
-      ],
+        targets: "_all",
+        className: "text-center"
+      }, ],
       order: [
         [0, "desc"]
       ],
@@ -178,6 +268,9 @@
         winner.id,
         winner.winningTicket,
         winner.winner,
+        winner.area,
+        winner.category,
+        winner.prize,
         formatTime(winner.dateWon),
       ]);
 
@@ -198,19 +291,51 @@
 
     // START button triggers polling
     startButton.addEventListener("click", () => {
+
+      const selectedRegion = region.value;
+      const selectedCategory = category.value;
+      const selectedPrize = prize.value;
+
+      const payload = {
+        status: "rolling",
+        region: selectedRegion,
+        category: selectedCategory,
+        prize: selectedPrize
+      }
+
       fetch("sync.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          status: "rolling"
-        }),
+        body: JSON.stringify(payload),
       });
 
       // Start polling for new winner
       if (winnerInterval) clearInterval(winnerInterval);
       winnerInterval = setInterval(loadWinners, 2000);
+    });
+
+
+
+    // EXPORT CSV FILE FOR WINNERS
+    document.getElementById("downloadCSV").addEventListener("click", function() {
+      const table = document.getElementById("winnerTable");
+      let csv = [];
+      for (let row of table.rows) {
+        let cols = Array.from(row.cells).map(cell =>
+          `"${cell.innerText.replace(/"/g, '""')}"`);
+        csv.push(cols.join(","));
+      }
+
+      const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "winners.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     });
   </script>
 </body>

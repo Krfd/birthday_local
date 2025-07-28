@@ -1,25 +1,19 @@
 $(document).ready(function () {
-  $("#setupDate").submit(function (e) {
+  $("#updatePasswordForm").submit(function (e) {
     e.preventDefault();
-    var setupDate = $(this).serialize();
-
-    const from = document.getElementById("from").value;
-    const to = document.getElementById("to").value;
-
-    console.log(`FROM: ${from}`);
-    console.log(`TO: ${to}`);
+    var update = $(this).serialize();
 
     $.ajax({
       type: "POST",
-      url: "functions/setup.php",
-      data: setupDate,
+      url: "functions/update.php",
+      data: update,
       success: function (res) {
         switch (res) {
           case "updated":
             Swal.fire({
               icon: "success",
               iconColor: "#28a745",
-              title: "Setup has been created",
+              title: "Password has been updated",
               text: "Please wait...",
               timer: 2000,
               timerProgressBar: true,
@@ -34,11 +28,32 @@ $(document).ready(function () {
               location.reload();
             });
             break;
+          case "mismatch":
+            Swal.fire({
+              icon: "error",
+              title: "Password does not match",
+              text: "Please confirm your password and try again",
+              confirmButtonText: "TRY AGAIN",
+              confirmButtonColor: "#d33",
+              allowOutsideClick: false,
+            });
+            break;
           case "invalid":
             Swal.fire({
               icon: "error",
-              title: "Invalid Date",
-              text: "Please enter a valid date",
+              title: "Invalid updating password",
+              text: "Please verify your password and try again.",
+              confirmButtonText: "Try again",
+              confirmButtonColor: "#d33",
+              allowOutsideClick: false,
+            });
+            break;
+          case "disabled":
+            Swal.fire({
+              icon: "error",
+              title: "Unable to update",
+              text: "Please try again later.",
+              confirmButtonText: "OKAY",
               confirmButtonColor: "#d33",
               allowOutsideClick: false,
             });

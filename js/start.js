@@ -1,27 +1,47 @@
 let invoices = [];
 let names = [];
 let excludedTicketNumbers = new Set();
-let excludedCustomerNames = [];
+// let excludedCustomerNames = [];
+let excludedCustomerNames = new Set();
 let isRolling = false;
-let finalInvoice = ""; // Global so it's accessible in both functions
+let finalInvoice = "";
 let users = [];
 let hasStarted = false;
+let currentRegion = "";
+let currentCategory = "";
+let currentPrize = "";
 
-// Declare pollingInterval outside of the functions
+let lastStatus = null;
+
 let pollingInterval = setInterval(() => {
   fetch("./sync.php")
     .then((res) => res.json())
     .then((state) => {
-      if (state.status === "idle") {
-        finalInvoice = "";
-        hasStarted = false;
-        isRolling = false;
+      if (!state || typeof state !== "object") {
+        console.warn("⚠️ Invalid state from sync.php:", state);
+        return;
       }
 
-      // Reset UI elements if needed (not doing this for now in your code)
-      if (state.status === "rolling" && !isRolling && !hasStarted) {
-        hasStarted = true;
-        startRaffle();
+      currentRegion = state.region?.trim() || "";
+      currentCategory = state.category?.trim() || "";
+      currentPrize = state.prize?.trim() || "";
+      finalInvoice = state.finalInvoice?.trim() || "";
+
+      // excludedTicketNumbers = new Set(state.excludedTicketNumbers || []);
+      // excludedCustomerNames = new Set(state.excludedCustomerNames || []);
+
+      if (lastStatus !== state.status) {
+        lastStatus = state.status;
+
+        if (state.status === "rolling") {
+          const reloadKey = "raffle_rolling_reloaded";
+          if (!sessionStorage.getItem(reloadKey)) {
+            sessionStorage.setItem(reloadKey, "true");
+            location.reload();
+          }
+        } else {
+          sessionStorage.removeItem("raffle_rolling_reloaded");
+        }
       }
     })
     .catch((err) => console.error("Polling error:", err));
@@ -33,15 +53,11 @@ fetch("api/getEntries.php")
   .then((data) => {
     // ✅ Rehydrate excluded customer names
     if (data.excludedCustomerNames) {
-      excludedCustomerNames = data.excludedCustomerNames;
+      // excludedCustomerNames = data.excludedCustomerNames;
+      excludedCustomerNames = new Set(data.excludedCustomerNames);
     }
-
-    // ORIGINAl
-    // ✅ Apply customer filter before creating invoices/names
-    // users = data.filter((u) => !excludedCustomerNames.includes(u.customerName));
-
     users = data
-      .filter((u) => !excludedCustomerNames.includes(u.customerName))
+      .filter((u) => !excludedCustomerNames.has(u.customerName))
       .map((u) => ({
         customerName: u.customerName,
         ticketNumbers: u.ticketNumbers,
@@ -56,6 +72,12 @@ fetch("api/getEntries.php")
   .then((res) => res.json())
   .then((state) => {
     // Exclude tickets based on state
+
+    currentRegion = state.region || "";
+    currentCategory = state.category || "";
+    currentPrize = state.prize || "";
+
+    // RESTORING THE EXCLUSIONS FROM RAFFLE_STATE.JSON WHEN PAGE RELOADS
     if (state.excludedTicketNumbers) {
       for (const ticket of state.excludedTicketNumbers) {
         excludedTicketNumbers.add(ticket);
@@ -70,43 +92,47 @@ fetch("api/getEntries.php")
     }
   });
 
-console.log(`FETCHED DATA OUTSIDE API: ${users}`);
-
-// Prevent refresh/reload keys
-window.addEventListener("keydown", (e) => {
-  if (
-    e.key === "F5" ||
-    (e.key.toLowerCase() === "r" && (e.ctrlKey || e.metaKey))
-  ) {
-    e.preventDefault();
-  }
-});
-
-// Confirm before closing/reloading the page
-window.addEventListener("beforeunload", (e) => {
-  e.preventDefault();
-  e.returnValue = "";
-});
-
 function startRaffle() {
+  // ✅ Only refresh ONCE per finalInvoice value (unique per roll)
+  const reloadKey = `raffle_refreshed_for_${finalInvoice}`;
+  const alreadyReloaded = sessionStorage.getItem(reloadKey);
+
+  if (!alreadyReloaded) {
+    // Mark it as reloaded so it doesn’t loop
+    sessionStorage.setItem(reloadKey, "yes");
+
+    // ✅ Trigger full reload
+    console.log("🔁 Refreshing before raffle starts...");
+    location.reload();
+    return; // STOP raffle, reload happens
+  }
+
   if (isRolling || invoices.length === 0) return;
 
-  console.log(invoices);
-  // if (isRolling) return;
   isRolling = true;
 
   // ✅ Clear old state
   document.getElementById("winner-display").textContent = "";
   finalInvoice = ""; // Make sure to reset it when starting a new roll
 
-  const availableInvoices = invoices.filter(
-    (ticket) => !excludedTicketNumbers.has(ticket)
-  );
+  // const availableInvoices = invoices.filter(
+  //   (ticket) => !excludedTicketNumbers.has(ticket)
+  // );
+  const availableInvoices = invoices.filter((ticket) => {
+    const user = users.find((u) =>
+      u.ticketNumbers.map(String).includes(ticket)
+    );
+    return (
+      !excludedTicketNumbers.has(ticket) &&
+      user &&
+      !excludedCustomerNames.has(user.customerName)
+    );
+  });
 
   if (availableInvoices.length === 0) {
     document.getElementById(
       "winner-display"
-    ).innerHTML = `Winner<br><strong>Unknown</strong>`;
+    ).innerHTML = `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
     isRolling = false;
     hasStarted = false;
     finalInvoice = "";
@@ -117,8 +143,13 @@ function startRaffle() {
       body: JSON.stringify({
         status: "done",
         finalInvoice,
-        excludedTicketNumbers: [...excludedTicketNumbers],
-        excludedCustomerNames,
+        // excludedTicketNumbers,
+        // excludedCustomerNames,
+        excludedTicketNumbers: Array.from(excludedTicketNumbers),
+        excludedCustomerNames: Array.from(excludedCustomerNames),
+        region: currentRegion,
+        category: currentCategory,
+        prize: currentPrize,
       }),
     });
 
@@ -130,99 +161,74 @@ function startRaffle() {
     digitEl.textContent = "?";
     digitEl.classList.remove("rolling", "locked");
     digitEl.style.animation = "none";
-    digitEl.offsetHeight; // Force reflow to restart animation
+    digitEl.offsetHeight;
     digitEl.style.animation = "";
   });
 
-  document.querySelector(".chance-display").style.display = "block";
-  document.getElementById("matchingTickets").textContent = "0";
-
   if (!finalInvoice) {
+    // RANDOM WINNER HERE
     const winnerIndex =
       crypto.getRandomValues(new Uint32Array(1))[0] % availableInvoices.length;
     finalInvoice = availableInvoices[winnerIndex];
 
-    // Save to sync.php so others know
     fetch("sync.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "rolling", finalInvoice }),
+      body: JSON.stringify({
+        status: "rolling",
+        finalInvoice,
+      }),
     });
   }
 
-  let currentDigit = digits.length - 1;
-
-  // ORIGINAL
   function rollNextDigit() {
-    if (currentDigit < 0) {
-      document.querySelector(".chance-display").style.display = "none";
-      showWinner();
-      return;
-    }
-
-    const digitEl = digits[currentDigit];
-    const finalDigit = finalInvoice[currentDigit];
+    const digits = document.querySelectorAll("#invoice-display .digit");
+    const digitCount = digits.length;
     const totalRolls = 20;
-    let rollCount = 0;
+    const isGrandPrize = currentCategory === "Grand Prize";
+    const totalDuration = isGrandPrize ? 5000 : 3000; // ms
+    const perDigitDuration = totalDuration / digitCount;
+    const intervalDelay = perDigitDuration / totalRolls;
 
-    let lastRandomDigit = -1;
+    let currentDigitIndex = digitCount - 1; // Start from last digit
 
-    function slowRoll() {
-      if (rollCount >= totalRolls) {
-        digitEl.textContent = finalDigit;
+    function rollSingleDigit(index) {
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        const nextDigit = Math.floor(Math.random() * 10);
+        digits[index].textContent = nextDigit;
 
-        digitEl.classList.remove("rolling");
-        digitEl.classList.remove("locked");
-        void digitEl.offsetWidth;
-        digitEl.classList.add("locked");
+        digits[index].classList.remove("rolling", "locked");
+        digits[index].style.animation = "none";
+        digits[index].offsetHeight;
+        digits[index].style.animation = "";
+        digits[index].classList.add("rolling");
 
-        const finalInvoiceStr = finalInvoice
-          .toString()
-          .padStart(digits.length, "0");
-        const revealedDigits = finalInvoiceStr.slice(currentDigit);
-        const matchCount = invoices.filter((inv) =>
-          inv.endsWith(revealedDigits)
-        ).length;
-        document.getElementById(
-          "matchingTickets"
-        ).textContent = `${matchCount}`;
+        if (count >= totalRolls) {
+          clearInterval(interval);
+          digits[index].textContent = finalInvoice[index];
+          digits[index].classList.remove("rolling");
+          digits[index].offsetWidth;
+          digits[index].classList.add("locked");
 
-        currentDigit--;
-        setTimeout(rollNextDigit, 3000); // Wait before next digit
-        return;
-      }
+          // Move to the previous digit
+          currentDigitIndex--;
+          if (currentDigitIndex >= 0) {
+            setTimeout(() => rollSingleDigit(currentDigitIndex), 0);
+          } else {
+            // const winnerTicket = parseInt(finalInvoice);
+            // const winnerUser = users.find((user) =>
+            //   user.ticketNumbers.map(String).includes(String(winnerTicket))
+            // );
 
-      const nextDigit = rollCount % 10;
-      digitEl.textContent = nextDigit;
-
-      digitEl.classList.remove("rolling");
-      digitEl.style.animation = "none";
-      digitEl.offsetHeight;
-      digitEl.style.animation = "";
-      digitEl.classList.add("rolling");
-
-      rollCount++;
-
-      // Dramatic slowing effect
-      let delay;
-      const progress = rollCount / totalRolls;
-
-      if (progress < 0.3) {
-        delay = 40; // Fast start
-      } else if (progress < 0.6) {
-        delay = 120;
-      } else if (progress < 0.8) {
-        delay = 250;
-      } else if (progress < 0.95) {
-        delay = 500; // Slow!
-      } else {
-        delay = 900; // Very slow before locking digit (max suspense)
-      }
-
-      setTimeout(slowRoll, delay);
+            showWinner();
+          }
+        }
+      }, intervalDelay);
     }
 
-    slowRoll();
+    rollSingleDigit(currentDigitIndex);
   }
 
   rollNextDigit();
@@ -230,19 +236,25 @@ function startRaffle() {
   fetch("./sync.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: "rolling", finalInvoice }),
+    body: JSON.stringify({
+      status: "rolling",
+      finalInvoice,
+    }),
   });
 }
 
 function submitWinnerDetails(winnerName, winnerTicket) {
-  fetch("./submit-winner.php", {
+  fetch("./functions/submit-winner.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      winnerName: winnerName,
-      winnerTicket: winnerTicket,
+      winnerName,
+      winnerTicket,
+      region: currentRegion,
+      category: currentCategory,
+      prize: currentPrize,
     }),
   })
     .then((response) => {
@@ -278,7 +290,6 @@ function showWinner() {
     user.ticketNumbers.map(String).includes(String(winnerTicket))
   );
 
-  // Ensure winnerName is valid before proceeding
   let winnerName = winnerUser ? winnerUser.customerName : "Unknown";
 
   // Ensure winnerName is not undefined in case of any async timing issue
@@ -287,17 +298,16 @@ function showWinner() {
     winnerName = "Unknown"; // Default to "Unknown" to avoid crashing
   }
 
-  // Update the UI and exclude tickets as necessary
+  // UPDATES THE SET IN MEMORY TO SURE:
+  // THEIR TICKETS CAN'T WIN AGAIN
+  // THEIR NAME WON'T BE SELECTED AGAIN
   if (winnerUser) {
-    // Exclude all this user's tickets
     winnerUser.ticketNumbers.forEach((ticket) =>
       excludedTicketNumbers.add(String(ticket))
     );
 
-    // Exclude this customer
-    excludedCustomerNames.push(winnerUser.customerName);
+    excludedCustomerNames.add(winnerUser.customerName);
 
-    // Update global `users`, `invoices`, `names`
     users = users.filter((u) => u.customerName !== winnerUser.customerName);
     invoices = invoices.filter(
       (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket))
@@ -306,67 +316,71 @@ function showWinner() {
   }
 
   const winnerDisplay = document.getElementById("winner-display");
-  let sliderIndex = 0;
-  let maxSlide = 20;
 
-  const nameSlider = setInterval(() => {
-    // Only choose a random name if there's at least one available invoice
-    if (names.length > 0) {
-      const randomName = names[Math.floor(Math.random() * names.length)];
-      winnerDisplay.innerHTML = `Winner<br><strong>${randomName}</strong>`;
-    }
+  winnerDisplay.innerHTML = `<strong data-text="${winnerName}" class="winnerFont">${winnerName}</strong>`; // Final winner name
+  showConfetti(winnerName, winnerTicket);
 
-    sliderIndex++;
-    if (sliderIndex >= maxSlide) {
-      clearInterval(nameSlider);
-      winnerDisplay.innerHTML = `Winner<br><strong>${winnerName}</strong>`; // Final winner name
-      showConfetti(winnerName, winnerTicket);
-
-      submitWinnerDetails(winnerName, winnerTicket);
-    }
-  }, 100); // Shuffle names every 100ms
+  console.log(
+    `Submitting winner with: ${winnerName} - ${winnerTicket} - ${currentRegion} -  ${currentCategory} - ${currentPrize}`
+  );
+  submitWinnerDetails(winnerName, winnerTicket);
 }
 
 function showConfetti(winnerName, winnerTicket) {
-  const end = Date.now() + 15 * 1000;
-  const colors = ["#bb0000", "#ffffff"];
+  const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
+  const end = Date.now() + duration;
+
+  const colors = ["#3a8004", "#b39100", "#0a66cc", "#b02e00"];
+  const confettiColors =
+    currentCategory === "Grand Prize"
+      ? ["#FFD700", "#FFA500", "#FFF8DC"]
+      : colors;
 
   (function frame() {
     confetti({
-      particleCount: 2,
+      particleCount: 8,
       angle: 60,
-      spread: 55,
+      spread: 60,
       origin: { x: 0 },
-      colors: colors,
+      colors: confettiColors,
     });
+
     confetti({
-      particleCount: 2,
+      particleCount: 8,
       angle: 120,
-      spread: 55,
+      spread: 60,
       origin: { x: 1 },
-      colors: colors,
+      colors: confettiColors,
     });
 
     if (Date.now() < end) {
       requestAnimationFrame(frame);
     } else {
-      // ✅ Reset raffle state so next click works
+      // ✅ Reset raffle state
       isRolling = false;
       hasStarted = false;
       finalInvoice = "";
 
-      excludedCustomerNames.push(winnerName);
+      excludedCustomerNames.add(winnerName);
 
+      // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
       fetch("./sync.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "done",
           finalInvoice,
-          excludedTicketNumbers: [...excludedTicketNumbers],
-          excludedCustomerNames,
+          // excludedTicketNumbers,
+          // excludedCustomerNames,
+          excludedTicketNumbers: Array.from(excludedTicketNumbers),
+          excludedCustomerNames: Array.from(excludedCustomerNames),
+          region: currentRegion,
+          category: currentCategory,
+          prize: currentPrize,
         }),
       });
     }
   })();
+  sessionStorage.clear();
+  sessionStorage.removeItem(`raffle_refreshed_for_${finalInvoice}`);
 }

@@ -14,14 +14,29 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 }
 set_error_handler("errorHandler");
 
-function normalize_name($name)
+// function normalize_name($name)
+// {
+//     $name = trim($name);
+//     $name = mb_strtolower($name, 'UTF-8');
+//     $name = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+//     return preg_replace('/[^a-z0-9\s]/i', '', $name);
+// }
+
+function generate_name_variants($str)
 {
-    $name = trim($name);
-    $name = mb_strtolower($name, 'UTF-8');
-    $name = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name); // ñ → n
-    return preg_replace('/[^a-z0-9\s]/i', '', $name);
+    $variants = [$str];
+    $n_to_enye = str_ireplace('n', 'ñ', $str);
+    $enye_to_n = str_ireplace('ñ', 'n', $str);
+
+    if (!in_array($n_to_enye, $variants, true)) {
+        $variants[] = $n_to_enye;
+    }
+    if (!in_array($enye_to_n, $variants, true)) {
+        $variants[] = $enye_to_n;
+    }
+    return array_unique($variants);
 }
-// DB connection
+
 $servername = "192.168.101.68";
 $db = "RAFFLE";
 $username = "sa";
@@ -34,370 +49,314 @@ try {
     $table_name = 'responses';
     $raffle_table = 'raffle_entries';
     $mismatch_table = 'mismatch';
-    $invalid_invoice_table = 'invalid_invoices';
+    $overall_findings_table = 'overall_findings';
 
-    // Fetch data from responses table instead of CSV
+    // Ensure mismatch table exists
+    $conn->exec("IF OBJECT_ID('$mismatch_table', 'U') IS NULL
+    CREATE TABLE $mismatch_table (
+        ID INT IDENTITY PRIMARY KEY,
+        docId INT,
+        Branch VARCHAR(255),
+        First_Name VARCHAR(255),
+        Last_Name VARCHAR(255),
+        Suffix VARCHAR(10),
+        Invoice_Number VARCHAR(255),
+        Mobile_Number VARCHAR(255),
+        Email VARCHAR(255),
+        Findings VARCHAR(255),
+        Postal_Address VARCHAR(MAX),
+        Updated NVARCHAR(1)
+    )");
 
-    // Get columns from responses table dynamically
-    $columnsStmt = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$table_name'");
-    $db_columns = $columnsStmt->fetchAll(PDO::FETCH_COLUMN);
-
-    if (!$db_columns || count($db_columns) < 5) {
-        errorHandler(E_USER_WARNING, "Invalid or missing columns in `$table_name` table.", __FILE__, __LINE__);
-        die("❌ `$table_name` table columns are missing or invalid.");
+    // Check if the 'mismatch' table exists before trying to create it
+    $table_exists = $conn->query("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '$mismatch_table'");
+    if (!$table_exists->fetch()) {
+        $conn->exec("CREATE TABLE $mismatch_table (
+            ID INT IDENTITY PRIMARY KEY,
+            docId INT,
+            Branch VARCHAR(255),
+            First_Name VARCHAR(255),
+            Last_Name VARCHAR(255),
+            Suffix VARCHAR(10),
+            Invoice_Number VARCHAR(255),
+            Mobile_Number VARCHAR(255),
+            Email VARCHAR(255),
+            Findings VARCHAR(255),
+            Postal_Address VARCHAR(MAX),
+            Updated NVARCHAR(1)
+        )");
     }
 
-    // Normalize columns like in CSV section
-    function normalize_col($col)
-    {
-        $col = trim($col);
-        $col = str_ireplace([' ', '-', '?'], '_', $col);
-        $col = strtolower($col);
-        if ($col === 'company name') return 'company_name';
-        return $col;
-    }
-    $normalized_columns = array_map('normalize_col', $db_columns);
+    // Ensure invalid_invoices table exists
+    $conn->exec("IF OBJECT_ID('invalid_invoices', 'U') IS NULL
+        CREATE TABLE invalid_invoices (
+            id INT IDENTITY PRIMARY KEY,
+            docId INT,
+            Branch VARCHAR(255),
+            First_Name VARCHAR(255),
+            Last_Name VARCHAR(255),
+            Suffix VARCHAR(10),
+            Invoice_Number VARCHAR(255),
+            Mobile_Number VARCHAR(255),
+            Email VARCHAR(255),
+            Findings VARCHAR(255),
+            Postal_Address VARCHAR(MAX)
+        )");
 
-    // Create raffle_entries table if not exists (keep existing code)
-    $conn->exec("
-IF OBJECT_ID('$raffle_table', 'U') IS NULL
-    EXEC('CREATE TABLE [$raffle_table] (
-        [Ticket_Number] INT IDENTITY(100001,1) PRIMARY KEY,
-        [Branch] VARCHAR(255),
-        [First_Name] VARCHAR(255),
-        [Last_Name] VARCHAR(255),
-        [Company] VARCHAR(255),
-        [Invoice_Number] VARCHAR(255),
-        [Mobile_Number] VARCHAR(255),
-        [Email] VARCHAR(255),
-        [Postal_Address] VARCHAR(255),
-        [Area_Code] INT
-    )')
-");
-    echo "✅ Table `$raffle_table` ready.<br>";
-
-    // Create mismatch table if not exists
-    $conn->exec("
-IF OBJECT_ID('$mismatch_table', 'U') IS NULL
-    EXEC('CREATE TABLE [$mismatch_table] (
-        [id] INT IDENTITY PRIMARY KEY,
-        [docId] INT,
-        [Branch] VARCHAR(255),
-        [First_Name] VARCHAR(255),
-        [Last_Name] VARCHAR(255),
-        [Company] VARCHAR(255),
-        [Invoice_Number] VARCHAR(255),
-        [Mobile_Number] VARCHAR(255),
-        [Email] VARCHAR(255),
-        [Findings] VARCHAR(255),
-        [Area_Code] INT
-    )')
-");
-    echo "✅ Table `$mismatch_table` ready.<br>";
-
-    // Create invalid_invoices table if not exists
-    $conn->exec("IF OBJECT_ID('$invalid_invoice_table', 'U') IS NULL
-    EXEC('CREATE TABLE [$invalid_invoice_table] (
-        [id] INT IDENTITY PRIMARY KEY,
-        [Branch] VARCHAR(255),
-        [First_Name] VARCHAR(255),
-        [Last_Name] VARCHAR(255),
-        [Company] VARCHAR(255),
-        [Invoice_Number] VARCHAR(255),
-        [Mobile_Number] VARCHAR(255),
-        [Email] VARCHAR(255),
-        [Findings] VARCHAR(255)
-    )')
-");
-    echo "✅ Table `$invalid_invoice_table` ready.<br>";
-
-    $column_map = array_flip($normalized_columns);
-
-    // Required columns - check presence
-    $required_columns = [
-        'branch_purchased',
-        'invoice_number',
-        'first_name',
-        'last_name',
-        'mobile_number',
-        'email',
-    ];
-
-    $missing = [];
-    foreach ($required_columns as $col) {
-        if (!isset($column_map[$col])) {
-            $missing[] = $col;
-        }
-    }
-
-    if (!empty($missing)) {
-        $msg = "❌ Required column(s) missing in `$table_name`: " . implode(', ', $missing);
-        errorHandler(E_USER_WARNING, $msg, __FILE__, __LINE__);
-        echo $msg . "<br><pre>" . print_r($normalized_columns, true) . "</pre>";
-        exit;
-    }
-
-    // Prepare statements for raffle and checks
-    $branchIndex    = $column_map['branch_purchased'];
-    $invoiceIndex   = $column_map['invoice_number'];
-    $firstNameIndex = $column_map['first_name'];
-    $lastNameIndex  = $column_map['last_name'];
-    $mobileIndex    = $column_map['mobile_number'];
-    $emailIndex     = $column_map['email'];
-    $companyIndex   = $column_map['company_name'] ?? null;
-
-    // Fetch all rows from responses table
     $stmt = $conn->query("SELECT * FROM [$table_name]");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Prepare other necessary statements
-    $customer_stmt = $conn->prepare("SELECT inv_amount, branch, cust_name, areaCode FROM customers WHERE LOWER(LTRIM(RTRIM(inv))) = LOWER(?) AND LOWER(LTRIM(RTRIM(branch))) = LOWER(?)");
-
-    $mismatch_check_stmt = $conn->prepare("SELECT 1 FROM [$mismatch_table] WHERE [docId] = ?");
-
     $raffle_stmt = $conn->prepare("INSERT INTO [$raffle_table] 
-    ([Branch], [First_Name], [Last_Name], [Company], [Invoice_Number], [Mobile_Number], [Email], [Postal_Address], [Area_Code])
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        ([Counter], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Exported])
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $raffle_check_stmt = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table]
-    WHERE [Branch] = ? AND [Invoice_Number] = ? AND [First_Name] = ? AND [Last_Name] = ?");
+    // ORIGINAL
+    $existing_check = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table] WHERE [Branch] = ? AND [Invoice_Number] = ? AND (([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?) OR ([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?))");
 
-    $inserted = 0;
+    // MISMATCH
+    $mismatch_stmt = $conn->prepare("INSERT INTO [$mismatch_table] (docId, Branch, First_Name, Last_Name, Suffix, Invoice_Number, Mobile_Number, Email, Findings, Postal_Address, Updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // OVERALL FINDINGS
+    $overall = $conn->prepare("INSERT INTO [$overall_findings_table] (docId, branch, first_name, last_name, suffix, inv, mobile, email, postal, findings) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // INVALID INVOICES
+    $invalid_invoice_stmt = $conn->prepare("INSERT INTO invalid_invoices (docId, Branch, First_Name, Last_Name, Suffix, Invoice_Number, Mobile_Number, Email, Findings, Postal_Address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
     $ticketed = 0;
 
-    $invalid_stmt_check = $conn->prepare("SELECT 1 FROM [$invalid_invoice_table] WHERE [Invoice_Number] = ?");
+    foreach ($rows as $row) {
+        $docId = $row['id'];
+        $first_name = trim($row['First_Name'] ?? '');
+        $last_name = trim($row['Last_Name'] ?? '');
+        $suffix = trim($row['Suffix'] ?? '');
+        $mobile_val = trim($row['Mobile_Number'] ?? '');
+        $branch_val = trim($row['Branch_Purchased'] ?? '');
+        $inv_val = trim($row['Invoice_Number'] ?? '');
+        $email_val = trim(strtolower($row['Email'] ?? ''));
+        $postal_address = trim($row['Postal_Address'] ?? '');
 
-    $invalid_area_codes = ['136', '137', '995', '998', '999'];
+        $validated = strtoupper(trim($row['Validated'] ?? 'N'));
+        $invalid = strtoupper(trim($row['InValid'] ?? 'N'));
+        $cancel = strtoupper(trim($row['Cancel'] ?? 'N'));
+        $sms = strtoupper(trim($row['SMS'] ?? 'N'));
 
-    foreach ($rows as $rowIndex => $row) {
-        // Normalize names & columns as needed
-        foreach ($row as $colName => $value) {
-            $row[$colName] = trim($value);
+        // Treat '0' as 'N'
+        $validated = ($validated === 'Y') ? 'Y' : 'N';
+        $invalid = ($invalid === 'Y') ? 'Y' : 'N';
+        $cancel = ($cancel === 'Y') ? 'Y' : 'N';
+        $sms = ($sms === 'Y') ? 'Y' : 'N';
+
+        $updated = 0;
+
+        if ($cancel === 'Y') {
+            $exists_mismatch = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE Branch = ? AND Invoice_Number = ?");
+            $exists_mismatch->execute([$branch_val, $inv_val]);
+
+            if (!$exists_mismatch->fetchColumn()) {
+                $mismatch_stmt->execute([$docId, $branch_val, $first_name, $last_name, $suffix, $inv_val, $mobile_val, $email_val, 'cancelled', $postal_address, $updated]);
+            }
+
+            $overall->execute([$docId, $branch_val, $first_name, $last_name, $suffix, $inv_val, $mobile_val, $email_val, $postal_address, 'cancelled']);
+            $conn->prepare("UPDATE [$table_name] SET Cancel = 'Y' WHERE Invoice_Number = ?")->execute([$inv_val]);
+            continue;
         }
 
-        // Normalize timestamp column if exists
-        if (isset($row['timestamp'])) {
-            $timestamp = strtotime($row['timestamp']);
-            $row['timestamp'] = $timestamp ? date('Y-m-d H:i:s', $timestamp) : null;
+        $validation_proc = $conn->prepare("EXEC CustomerValidation1 @mLName_ = ?, @mFName_ = ?, @mSuffix_ = ?, @mMDN_ = ?, @mBranch_ = ?");
+
+        $name_variants = generate_name_variants($first_name);
+        $last_variants = generate_name_variants($last_name);
+        $suffix_variants = generate_name_variants($suffix);
+
+        $results = [];
+        $matched = false;
+
+        foreach ($name_variants as $fname) {
+            foreach ($last_variants as $lname) {
+                foreach ($suffix_variants as $sfx) {
+                    $validation_proc->execute([$lname, $fname, $sfx, $inv_val, $branch_val]);
+                    $results = $validation_proc->fetchAll(PDO::FETCH_ASSOC);
+                    if (count($results) > 0) {
+                        $first_name = $fname;
+                        $last_name = $lname;
+                        $suffix = $sfx;
+                        $matched = true;
+                        break 3;
+                    }
+                }
+            }
         }
 
-        $postal_address = isset($row['Postal_Address']) ? $row['Postal_Address'] : '';
+        $valid_match_found = false;
 
-        $inv_val = $row[$db_columns[$invoiceIndex]];
-        $branch_val = $row[$db_columns[$branchIndex]];
-        $first_name = $row[$db_columns[$firstNameIndex]];
-        $last_name  = $row[$db_columns[$lastNameIndex]];
-        $email_val = isset($row[$db_columns[$emailIndex]]) ? strtolower(trim($row[$db_columns[$emailIndex]])) : '';
-        $mobile_val = isset($row[$db_columns[$mobileIndex]]) ? $row[$db_columns[$mobileIndex]] : '';
-        $company_val = ($companyIndex !== null && isset($row[$db_columns[$companyIndex]])) ? $row[$db_columns[$companyIndex]] : '';
+        foreach ($results as $validation_result) {
 
-        // Normalize inputs
-        $normalized_inv = normalize_name($inv_val);
-        // ORIGINAL
-        // $normalized_branch = normalize_name($branch_val);
-        $normalized_branch = strtolower($branch_val);
-        $normalized_firstname = normalize_name($first_name);
-
-        file_put_contents("customerFetchDebug.txt", date("Y-m-d H:i:s") . " - INV: $normalized_inv | BRANCH: $normalized_branch\n", FILE_APPEND);
-
-
-        // Query customer by invoice only
-        $customer_stmt->execute([$normalized_inv, $normalized_branch]);
-        $customer = $customer_stmt->fetch(PDO::FETCH_ASSOC);
-
-        // MATCHING AREA CODES
-        if (isset($customer['areaCode']) && in_array((string)$customer['areaCode'], $invalid_area_codes)) {
-            $docId = $row['id'] ?? null;
-
-            $mismatch_check_stmt->execute([$docId]);
-            if (!$mismatch_check_stmt->fetch()) {
-                $finding_text = "Invalid Area Code: {$customer['areaCode']}";
-
-                $mismatch_stmt = $conn->prepare("INSERT INTO [$mismatch_table]
-                ([docId], [Branch], [First_Name], [Last_Name], [Company], [Invoice_Number], [Mobile_Number], [Email], [Findings], [Postal_Address], [Area_Code])
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $mismatch_stmt->execute([
-                    $docId,
+            // if (($validation_result['LastName'] === 'N' && $validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'N') || ($validation_result['LastName'] === 'N' && $validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'Y')) {
+            //     $invalid_invoice_stmt->execute([
+            //         $docId,
+            //         $branch_val,
+            //         $first_name,
+            //         $last_name,
+            //         $suffix,
+            //         $inv_val,
+            //         $mobile_val,
+            //         $email_val,
+            //         'cancellation',
+            //         $postal_address
+            //     ]);
+            // } else if ($validation_result['LastName'] === 'Y') {
+            //     if (($validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'N') || ($validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'Y')) {
+            //         $mismatch_stmt->execute([
+            //             $docId,
+            //             $branch_val,
+            //             $first_name,
+            //             $last_name,
+            //             $suffix,
+            //             $inv_val,
+            //             $mobile_val,
+            //             $email_val,
+            //             'cancellation',
+            //             $postal_address,
+            //             $updated
+            //         ]);
+            //     }
+            // } else if ($validation_result['LastName'] === 'N') {
+            //     if (($validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'N') || $validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'Y') {
+            //         $mismatch_stmt->execute([
+            //             $docId,
+            //             $branch_val,
+            //             $first_name,
+            //             $last_name,
+            //             $suffix,
+            //             $inv_val,
+            //             $mobile_val,
+            //             $email_val,
+            //             'cancellation',
+            //             $postal_address,
+            //             $updated
+            //         ]);
+            //     }
+            // } else {
+            if ($validation_result['LastName'] === 'Y' && $validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'Y') {
+                $existing_check->execute([
                     $branch_val,
+                    $inv_val,
                     $first_name,
                     $last_name,
-                    $company_val,
-                    $inv_val,
-                    $mobile_val,
-                    $email_val,
-                    $finding_text,
-                    $postal_address,
-                    isset($customer['areaCode']) ? (int)$customer['areaCode'] : null
-                ]);
-            }
-            continue;
-        }
-
-
-        if (!$customer) {
-            $invalid_stmt_check->execute([$inv_val]);
-            $existing_invalid = $invalid_stmt_check->fetchColumn();
-
-            // If the invoice already exists, skip insertion
-            if ($existing_invalid) {
-                echo "Skipping record with Invoice Number: $inv_val (Already exists in invalid_invoices)<br>";
-                continue;
-            }
-
-            // Invoice not found → invalid
-            $invalid_stmt = $conn->prepare("INSERT INTO [$invalid_invoice_table]
-                ([Branch], [First_Name], [Last_Name], [Company], [Invoice_Number], [Mobile_Number], [Email], [Findings], [Postal_Address], [Area_Code])
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $invalid_stmt->execute([
-                $branch_val,
-                $first_name,
-                $last_name,
-                $company_val,
-                $inv_val,
-                $mobile_val,
-                $email_val,
-                "Invoice number not found in customers",
-                $postal_address,
-                isset($customer['areaCode']) ? (int)$customer['areaCode'] : null
-            ]);
-            continue;
-        }
-
-        // Existing normalization:
-        $expected_branch = strtolower(trim($customer['branch']));
-        $cust_name = normalize_name($customer['cust_name'] ?? '');
-
-        $has_company = !empty(trim($company_val));
-
-        if ($has_company) {
-            // Normalize company names for comparison
-            $company_normalized = normalize_name($company_val);
-            $company_match = $company_normalized === $cust_name;
-
-            // Branch and company name must match for a valid entry
-            $is_valid = ($expected_branch === $normalized_branch) && $company_match;
-        } else {
-            // Normalize first and last names for comparison
-            $cust_name_words = preg_split('/\s+/', preg_replace('/[^a-z\s]/i', '', $cust_name));
-
-            $normalized_firstname = normalize_name($first_name);
-            $first_name_words = preg_split('/\s+/', preg_replace('/[^a-z\s]/i', '', $normalized_firstname));
-            $last_name_normalized = normalize_name($last_name);
-
-            $first_match = in_array($first_name_words[0], $cust_name_words);
-            $last_match = in_array($last_name_normalized, $cust_name_words);
-
-            $all_response_names_exist_in_customer = true;
-            foreach ($first_name_words as $word) {
-                if (!in_array($word, $cust_name_words)) {
-                    $all_response_names_exist_in_customer = false;
-                    break;
-                }
-            }
-
-            $is_valid = (
-                $expected_branch === $normalized_branch &&
-                $first_match &&
-                $last_match &&
-                $all_response_names_exist_in_customer
-            );
-        }
-
-        $employee_check_stmt = $conn->prepare("SELECT 1 FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
-
-        // VALIDATION FOR EMPLOYEES BEFORE ISSUING A TICKET
-        $employee_check_stmt->execute([normalize_name($first_name), normalize_name($last_name)]);
-        $employee_exists = $employee_check_stmt->fetchColumn();
-
-        if ($employee_exists) {
-            // Log employee check parameters for debugging
-            file_put_contents("checkEmployee.txt", date("Y-m-d H:i:s") . " - Checking employee: $first_name $last_name\n", FILE_APPEND);
-            continue;
-        }
-
-        if ($is_valid) {
-            // Valid entry logic (raffle ticket generation)
-            $inv_amount = floatval($customer['inv_amount']);
-            $num_tickets = floor($inv_amount / 5000);
-            if ($num_tickets < 1) continue;
-
-            $raffle_check_stmt->execute([$branch_val, $inv_val, $first_name, $last_name]);
-            $existing = $raffle_check_stmt->fetchColumn();
-
-            $tickets_to_insert = $num_tickets - $existing;
-            if ($tickets_to_insert <= 0) continue;
-
-            for ($i = 0; $i < $tickets_to_insert; $i++) {
-                $areaCode = $customer['areaCode'] ?? null;
-                $raffle_stmt->execute([
-                    $branch_val,
-                    $first_name,
+                    $suffix,
                     $last_name,
-                    $company_val,
-                    $inv_val,
-                    $mobile_val,
-                    $email_val,
-                    $postal_address,
-                    $areaCode
+                    $first_name,
+                    $suffix
                 ]);
-                $ticketed++;
-            }
-        } else {
-            $findings = [];
 
-            // Check if customer has a company but response does not have a company
-            if (!empty($cust_name) && empty($company_val)) {
-                $findings[] = "Missing company name in response (expected: {$customer['cust_name']})";
-                // Skip first and last name mismatch checks if company name is missing
-                $skip_name_check = true;
-            } else {
-                $skip_name_check = false; // Proceed with normal name checks if there's no company issue
-            }
+                $total_amt = (float) ($validation_result['TotalAmt'] ?? 0);
+                $ticket_count = floor($total_amt / 5000);
 
-            // Only check first and last names if company check is passed
-            if (!$skip_name_check) {
-                // First name mismatch
-                if (!$first_match) {
-                    $findings[] = "First name mismatch (expected match in: {$customer['cust_name']})";
+                if ($ticket_count > 0) {
+                    if ($total_amt >= 100000) {
+                        $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
+                        $exists_check->execute([$docId]);
+
+                        if (!$exists_check->fetchColumn()) {
+                            $mismatch_stmt->execute([
+                                $docId,
+                                $branch_val,
+                                $first_name,
+                                $last_name,
+                                $suffix,
+                                $inv_val,
+                                $mobile_val,
+                                $email_val,
+                                'amount',
+                                $postal_address,
+                                $updated
+                            ]);
+
+                            $overall->execute([$docId, $branch_val, $first_name, $last_name, $suffix, $inv_val, $mobile_val, $email_val, $postal_address, 'amount']);
+                            $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
+                        }
+                    } else {
+                        $existing_check->execute([
+                            $branch_val,
+                            $inv_val,
+                            $first_name,
+                            $last_name,
+                            $suffix,
+                            $last_name,
+                            $first_name,
+                            $suffix
+                        ]);
+
+                        if (!$existing_check->fetchColumn()) {
+                            $sap_docnum = $validation_result['DocNum'] ?? null;
+
+                            if ($sap_docnum !== null) {
+                                $conn->prepare("UPDATE [$table_name] SET SAPDocNum = ? WHERE id = ?")->execute([$sap_docnum, $docId]);
+                            }
+
+                            for ($i = 0; $i < $ticket_count; $i++) {
+                                $raffle_stmt->execute([
+                                    $ticket_count,
+                                    $sap_docnum,
+                                    $branch_val,
+                                    $first_name,
+                                    $last_name,
+                                    $suffix,
+                                    $inv_val,
+                                    $mobile_val,
+                                    $email_val,
+                                    $postal_address,
+                                    0,
+                                    0,
+                                ]);
+                            }
+
+                            $ticketed += $ticket_count;
+                            $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$docId]);
+                        }
+                    }
                 }
-
-                // Last name mismatch
-                if (!$last_match) {
-                    $findings[] = "Last name mismatch (expected match in: {$customer['cust_name']})";
-                }
-
-                // Extra names mismatch
-                if (!empty($extra_first_names)) {
-                    $findings[] = "Extra/lack name(s) in first name: " . implode(', ', $extra_first_names);
-                }
+                $valid_match_found = true;
             }
+            // }
+        }
 
+        // MISMATCH OR INVALID INVOICE
+        if (!$valid_match_found) {
+            $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
+            $exists_check->execute([$docId]);
 
-            $finding_text = implode("; ", $findings);
+            if (!$exists_check->fetchColumn()) {
+                $finding_type = (count($results) === 0) ? 'invoice or branch' : 'name';
 
-            $docId = $row['id'] ?? null;
-
-            if ($docId) {
-                $mismatch_check_stmt->execute([$docId]);
-
-                if (!$mismatch_check_stmt->fetch()) {
-                    $mismatch_stmt = $conn->prepare("INSERT INTO [$mismatch_table]
-                        ([docId], [Branch], [First_Name], [Last_Name], [Company], [Invoice_Number], [Mobile_Number], [Email], [Findings], [Postal_Address], [Area_Code])
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($finding_type === 'invoice or branch') {
+                    $invalid_invoice_stmt->execute([
+                        $docId,
+                        $branch_val,
+                        $first_name,
+                        $last_name,
+                        $suffix,
+                        $inv_val,
+                        $mobile_val,
+                        $email_val,
+                        $finding_type,
+                        $postal_address
+                    ]);
+                } else {
                     $mismatch_stmt->execute([
                         $docId,
                         $branch_val,
                         $first_name,
                         $last_name,
-                        $company_val,
+                        $suffix,
                         $inv_val,
                         $mobile_val,
                         $email_val,
-                        $finding_text,
+                        $finding_type,
                         $postal_address,
-                        isset($customer['areaCode']) ? (int)$customer['areaCode'] : null
+                        $updated
                     ]);
                 }
+
+                $overall->execute([$docId, $branch_val, $first_name, $last_name, $suffix, $inv_val, $mobile_val, $email_val, $postal_address, $finding_type]);
+                $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
             }
         }
     }

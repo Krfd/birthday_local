@@ -47,6 +47,12 @@ try {
             $userId = $person->id;
             $user_name = $person->username;
             $dept = $person->dept;
+            if (is_array($person->region)) {
+                $region = $person->region;
+            } else {
+                $region = '';
+            }
+            $region = $person->region;
             $pass = $person->password;
         }
     }

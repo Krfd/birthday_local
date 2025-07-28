@@ -22,7 +22,6 @@
 </head>
 
 <body>
-
     <!-- LOG OUT -->
     <div
         class="modal p-4 py-md-5 fade"
@@ -51,9 +50,51 @@
         </div>
     </div>
 
+    <!-- UPDATE ACCOUNT -->
+    <div
+        class="modal p-4 py-md-5 fade"
+        tabindex="-1"
+        role="dialog"
+        aria-hidden="true"
+        id="update">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content rounded-3 shadow">
+                <div class="modal-body p-4">
+                    <div class="d-flex">
+                        <h5 class="mb-0 fw-semibold text-center">Update Password</h5>
+                        <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <hr>
+                    <form method="post" class="mt-3" id="updatePasswordForm">
+                        <input type="hidden" name="user_id" value="<?php echo $userId ?>" required>
+                        <div class="mt-3 d-flex flex-column gap-3 w-auto">
+                            <div class="col">
+                                <label for="old">Old Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control mt-1" name="old" id="old" maxlength="20" required>
+                            </div>
+                            <div class="col">
+                                <label for="new" class="form-label">New Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control mt-1" name="new" id="new" maxlength="20" required>
+                            </div>
+                            <div class="col">
+                                <label for="confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control mt-1" name="confirm" id="confirm" maxlength="20" required>
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            class="btn btn-lg btn-link fs-6 text-decoration-none col-6 pt-3 m-0 rounded-0 d-block mx-auto">
+                            <strong>Save</strong>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MISMATCHED RECORDS -->
     <?php
-    $customers = $conn->prepare("SELECT * FROM mismatch ORDER BY id DESC");
+    $customers = $conn->prepare("SELECT * FROM mismatch WHERE Updated = 0 ORDER BY id DESC");
     $customers->execute();
 
     $getCustomers = $customers->fetchAll(PDO::FETCH_OBJ);
@@ -64,15 +105,17 @@
             $docId = $customer->docId;
             $cus_fname = $customer->First_Name;
             $cus_lname = $customer->Last_Name;
+            $suffix = $customer->Suffix;
             $cus_inv = $customer->Invoice_Number;
             $cus_branch = $customer->Branch;
+            $cus_findings = $customer->Findings;
 
             echo '<div class="modal fade p-4" id="user_' . $id . '">
               <div class="modal-dialog" role="document">
                   <div class="modal-content rounded-3 shadow">
                       <div class="modal-body p-4">
                         <div class="d-flex align-items-center">
-                            <h5 class="text-center fw-bold text-secondary-emphasis text-center">Update User</h5>
+                            <h5 class="text-center fw-bold text-secondary-emphasis text-center">Update Customer</h5>
                             <button class="btn btn-sm btn-close ms-auto" data-bs-dismiss="modal"></button>
                         </div>
                         <form id="updateMismatch_' . $id . '" class="mt-3 mb-0" method="post">
@@ -83,40 +126,26 @@
                             <input type="hidden" name="user_id" value="' . $userId . '"/>
                             <input type="hidden" name="user_dept" value="' . $dept . '"/>
                             <input type="hidden" name="inv" value="' . $cus_inv . '"/>
-                            <input type="hidden" name="username" value="' . $user_name . '"/>
-                            <div>
-                                <label for="branch_' . $id . '" class="form-label">Branch <span class="text-danger">*</span></label>
-                                <select class="form-select" id="branch_' . $id . '" name="new_branch" required autocomplete="off">
-                                ';
+                            <input type="hidden" name="username" value="' . $user_name . '"/>';
 
-            $branches = $conn->prepare("SELECT branch FROM branches ORDER BY branch");
-            $branches->execute();
-
-            $getBranches = $branches->fetchAll(PDO::FETCH_OBJ);
-
-            if ($getBranches) {
-                foreach ($getBranches as $branchName) {
-                    $branch = $branchName->branch;
-
-                    if ($cus_branch === $branch) {
-                        echo '<option selected value="' . $branch . '">' . $branch . '</option>';
-                    } else {
-                        echo '<option value="' . $branch . '">' . $branch . '</option>';
-                    }
-                }
-            }
-
-            echo '</select>
-                            </div>
-                            <div class="mt-3">
+            if ($cus_findings === "name") {
+                echo '<div class="mt-3">
                                 <label for="fname_' . $id . '" class="form-label">First Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="fname" id="fname_' . $id . '" required autocomplete="off" value="' . $cus_fname . '">
                             </div>
-                            <div class="mt-3">
-                                <label for="lname_' . $id . '" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="lname" id="lname_' . $id . '" required autocomplete="off" value="' . $cus_lname . '">
-                            </div>
-                            <div class="flex nowrap p-0">
+                            <div class="mt-3 d-flex justify-content-between gap-3">
+                                <div>
+                                    <label for="lname_' . $id . '" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="lname" id="lname_' . $id . '" required autocomplete="off" value="' . $cus_lname . '">
+                                </div>
+                                <div>
+                                    <label for="suffix_' . $id . '" class="form-label">Suffix </label>
+                                    <input type="text" class="form-control" name="suffix" id="suffix_' . $id . '" autocomplete="off" value="' . $suffix . '">
+                                </div>
+                            </div>';
+            }
+
+            echo ' <div class="flex nowrap p-0">
                                 <button type="submit" class="btn d-block mx-auto btn-link fs-6 text-decoration-none m-0 mt-3 rounded-0" id="submit_' . $id . '">
                                     <strong>Update</strong>
                                 </button>
@@ -133,11 +162,12 @@
     <div class="position-relative py-3 mt-3">
         <!-- Left Side Buttons -->
         <div class="position-absolute start-0 m-3 ps-2">
-            <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i></button>
+            <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i>Logout</button>
             <br>
+            <button type="button" class="btn btn-sm btn-light text-dark mt-3" data-bs-toggle="modal" data-bs-target="#update" title="Update Password"><i class="bi bi-pen"></i> <span class="d-none d-md-inline-block">Account</span></button>
         </div>
         <!-- Center Heading -->
-        <h1 class="fw-bold text-center m-0"><?php echo $user_name ?></h1>
+        <h1 class="fw-bold text-center m-0 text-uppercase"><?php echo $user_name . ' - ' . $dept ?></h1>
     </div>
     <div class="container-fluid mt-3 d-flex flex-column flex-lg-row justify-content-between mt-3 mt-md-5 gap-3 align-items-start">
         <!-- CUSTOMER ENTRIES -->
@@ -161,22 +191,52 @@
                     <tbody>
                         <?php
 
-                        $entries = $conn->prepare("SELECT * FROM mismatch m WHERE NOT EXISTS (SELECT 1 FROm raffle_entries r 
-                        WHERE r.Branch = m.Branch 
-                        AND r.First_Name = m.First_Name 
-                        AND r.Last_Name = m.Last_Name 
-                        AND r.Invoice_Number = m.Invoice_Number 
-                        AND r.Mobile_Number = m.Mobile_Number 
-                        AND r.Email = m.Email) ORDER BY id DESC");
-                        $entries->execute();
+                        $getEntries = [];
 
-                        $getEntries = $entries->fetchAll(PDO::FETCH_OBJ);
+                        if (!empty($region)) {
+                            // Convert $region string to array if not already an array
+                            if (!is_array($region)) {
+                                $region = explode(',', $region); // split string by commas
+                                // trim whitespace around each region name
+                                $region = array_map('trim', $region);
+                            }
 
-                        $excluded_area_codes = ['136', '137', '995', '998', '999'];
+                            if (!empty($region)) {
+                                // Prepare placeholders for PDO query
+                                $placeholders = implode(',', array_fill(0, count($region), '?'));
+
+                                // Query branch_category for branches in the given regions
+                                $stmtBranches = $conn->prepare("SELECT branch FROM branch_category WHERE region IN ($placeholders)");
+                                $stmtBranches->execute($region);
+                                $branchesResult = $stmtBranches->fetchAll(PDO::FETCH_COLUMN);
+
+                                if (!empty($branchesResult)) {
+                                    // Prepare placeholders for branches
+                                    $placeholdersBranches = implode(',', array_fill(0, count($branchesResult), '?'));
+
+                                    $entries = $conn->prepare("SELECT * FROM mismatch m 
+                                    WHERE NOT EXISTS (
+                                        SELECT 1 FROM raffle_entries r 
+                                        WHERE r.Branch = m.Branch 
+                                        AND r.First_Name = m.First_Name 
+                                        AND r.Last_Name = m.Last_Name 
+                                        AND r.Invoice_Number = m.Invoice_Number 
+                                        AND r.Mobile_Number = m.Mobile_Number 
+                                        AND r.Email = m.Email
+                                    ) 
+                                    AND Updated = 0
+                                    AND Branch IN ($placeholdersBranches)
+                                    ORDER BY id DESC");
+
+                                    $entries->execute($branchesResult);
+                                    $getEntries = $entries->fetchAll(PDO::FETCH_OBJ);
+                                }
+                            }
+                        }
 
                         if ($getEntries) {
                             foreach ($getEntries as $entry) {
-                                $ticket = $entry->id;
+                                $id = $entry->id;
                                 $branch = $entry->Branch;
                                 $first = $entry->First_Name;
                                 $last = $entry->Last_Name;
@@ -185,25 +245,40 @@
                                 $email =  $entry->Email;
                                 $remarks =  $entry->Findings;
 
-                                echo '<tr>
-                                <td>' . $ticket . '</td>
-                                <td>' . $branch . '</td>
-                                <td>' . $first . '</td>
-                                <td>' . $last . '</td>
-                                <td>' . $inv . '</td>
-                                <td>' . $mobile . '</td>
-                                <td>' . $email . '</td>
-                                <td>' . $remarks . '</td>
-                                <td>';
-                                $area_code = $entry->Area_Code ?? '';
-                                $disable_action = in_array($area_code, $excluded_area_codes);
+                                if ($remarks === "amount") {
+                                    $remarks = "Exceeded amount to 100,000";
+                                } else if ($remarks === "cancellation") {
+                                    $remarks = "Has cancelled invoice";
+                                } else if ($remarks === "name") {
+                                    $remarks = "Name mismatched";
+                                }
 
-                                echo '<button class="btn btn-primary btn-sm" data-bs-toggle="modal" title="Rename" data-bs-target="#user_' . $ticket . '" ' . ($disable_action ? 'disabled' : '') . '>
+                                echo '<tr>
+                                    <td>' . $id . '</td>
+                                    <td>' . $branch . '</td>
+                                    <td>' . $first . '</td>
+                                    <td>' . $last . '</td>
+                                    <td>' . $inv . '</td>
+                                    <td>' . $mobile . '</td>
+                                    <td>' . $email . '</td>
+                                    <td>' . $remarks . '</td>
+                                    <td>';
+
+                                if ($entry->Findings == "amount") {
+                                    echo '<button class="btn btn-success btn-sm amount" data-id="' . $id . '" title="Approve exceeded amount?" data-branch="' . $branch . '" data-inv="' . $inv . '">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>';
+                                } else if ($entry->Findings === "cancellation") {
+                                    echo '<button class="btn btn-danger btn-sm cancellation text-white" data-id="' . $id . '" title="Approve entry?" data-branch="' . $branch . '" data-inv="' . $inv . '">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>';
+                                } else {
+                                    echo '<button class="btn btn-primary btn-sm" data-bs-toggle="modal" title="Rename" data-bs-target="#user_' . $id . '">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>';
+                                }
 
-                                echo '
-                                </td>
+                                echo '</td>
                                 </tr>';
                             }
                         }
@@ -219,8 +294,117 @@
     <script src="js/datatables/dataTables.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/updateMismatch.js"></script>
+    <script src="js/update.js"></script>
     <script>
         new DataTable('#mismatch');
+
+        // AMOUNT
+        $(".amount").click(function(e) {
+            e.preventDefault();
+
+            var inv = $(this).attr("data-inv");
+            var branch = $(this).attr("data-branch");
+            var id = $(this).attr("data-id");
+
+            Swal.fire({
+                title: "Approve this customer?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Confirm",
+                confirmButtonColor: "#45eb45",
+                cancelButtonText: "Back",
+                cancelButtonColor: "#dc3545",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "GET",
+                        url: "functions/approve.php",
+                        data: {
+                            inv,
+                            branch,
+                            id
+                        },
+                        success: function(res) {
+                            switch (res) {
+                                case "approved":
+                                    Swal.fire({
+                                        icon: "success",
+                                        title: "Customer has been approved",
+                                        iconColor: "#28a745",
+                                        confirmButtonColor: "#45eb45",
+                                        confirmButtonText: "Okay",
+                                        allowOutsideClick: false,
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                    break;
+                                default:
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Something went wrong",
+                                        iconColor: "#dc3545",
+                                        allowOutsideClick: false,
+                                    });
+                            }
+                        },
+                    });
+                }
+            });
+        });
+
+        // CANCELLATION
+        $(".cancellation").click(function(e) {
+            e.preventDefault();
+
+            var inv = $(this).attr("data-inv");
+            var branch = $(this).attr("data-branch");
+            var id = $(this).attr("data-id");
+
+            Swal.fire({
+                title: "Approve this customer?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Confirm",
+                confirmButtonColor: "#45eb45",
+                cancelButtonText: "Back",
+                cancelButtonColor: "#dc3545",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "GET",
+                        url: "functions/approve.php",
+                        data: {
+                            inv,
+                            branch,
+                            id
+                        },
+                        success: function(res) {
+                            switch (res) {
+                                case "approved":
+                                    Swal.fire({
+                                        icon: "success",
+                                        title: "Customer has been approved",
+                                        iconColor: "#28a745",
+                                        confirmButtonColor: "#45eb45",
+                                        confirmButtonText: "Okay",
+                                        allowOutsideClick: false,
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                    break;
+                                default:
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Something went wrong",
+                                        iconColor: "#dc3545",
+                                        allowOutsideClick: false,
+                                    });
+                            }
+                        },
+                    });
+                }
+            });
+        });
     </script>
 </body>
 

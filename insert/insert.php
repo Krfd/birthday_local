@@ -11,7 +11,7 @@ try {
 
     $password = password_hash("Password", PASSWORD_DEFAULT);
 
-    $insert = $conn->prepare("INSERT INTO users (username, password, dept, disabled, isAdmin, created) VALUES ('Karlalooo', :password, '', 0, 1, SYSDATETIME())");
+    $insert = $conn->prepare("INSERT INTO users (username, password, dept, region, disabled, isAdmin, created) VALUES ('Karlalooo', :password, '', '', 0, 1, SYSDATETIME())");
     $insert->bindParam(":password", $password);
 
     if ($insert->execute()) {

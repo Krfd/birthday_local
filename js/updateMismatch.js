@@ -1,3 +1,22 @@
+document.addEventListener("contextmenu", function (e) {
+  e.preventDefault();
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.keyCode == 123) {
+    // F12 key
+    e.preventDefault();
+  }
+});
+
+// Disable Ctrl + Shift + I
+document.addEventListener("keydown", function (e) {
+  if (e.ctrlKey && e.shiftKey && e.keyCode == 73) {
+    // Ctrl + Shift + I
+    e.preventDefault();
+  }
+});
+
 $(".modal").on("submit", "form[id^='updateMismatch_']", function (e) {
   e.preventDefault();
   var customer = $(this).serialize();

@@ -3,7 +3,8 @@
 include("../config/connection.php");
 
 try {
-    $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM raffle_entries");
+    // $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM raffle_entries WHERE Excluded = 0");
+    $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM current_entries WHERE Excluded = 0");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -12,7 +13,6 @@ try {
     foreach ($rows as $row) {
         $name = trim($row['First_Name'] . ' ' . $row['Last_Name']);
         $ticket = (int)$row['Ticket_Number'];
-        // $company = $row['Company'] ?? '';
 
         if (!isset($users[$name])) {
             $users[$name] = [];

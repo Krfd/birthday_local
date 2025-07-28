@@ -1,13 +1,26 @@
 <?php
 
+$authorized_users = ['karlalooo' => 'iap', 'merruel' => 'iap', 'jummie' => 'iap'];
+$user_ = $_SERVER['PHP_AUTH_USER'] ?? '';
+$pass_ = $_SERVER['PHP_AUTH_PW'] ?? '';
+
+if (!isset($authorized_users[$user_]) || $authorized_users[$user_] !== $pass_) {
+    // header('WWW-Authenticate: Basic realm="Developer Toggle"');
+    $realm = 'Developer Toggle ' . time(); // Use time or session to make it dynamic
+    header('WWW-Authenticate: Basic realm="' . $realm . '"');
+    header('HTTP/1.0 401 Unauthorized');
+    echo 'ASA 😝';
+    exit;
+}
 
 include("../config/connection.php");
 
 $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('AGDAO'),
 ('ANTIQUE'),
-('BACOLOD'),
-('BACOLOD DOS'),
+('BACOLOD - ARANETA'),
+('BACOLOD DOS - MANDALAGAN'),
+('BAGO'),
 ('BAIS'),
 ('BAJADA'),
 ('BALANGA'),
@@ -18,12 +31,13 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('BAROTAC VIEJO'),
 ('BATANGAS'),
 ('BAYAWAN'),
+('BAYBAY LEYTE'),
 ('BAYUGAN'),
 ('BOGO'),
 ('BUENAVISTA'),
 ('BULACAN'),
-('BUTUAN'),
-('BUTUAN DOS'),
+('BUTUAN - M. CALO'),
+('BUTUAN - JC AQUINO'),
 ('CABANATUAN'),
 ('CABATUAN'),
 ('CADIZ'),
@@ -70,8 +84,8 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('LEGASPI ALBAY'),
 ('LEMERY'),
 ('LIPA'),
-('LUCENA'),
-('LUCENA DOS'),
+('LUCENA - BAYAN'),
+('LUCENA - IBABANG DUPAY'),
 ('LUPON'),
 ('MAASIN'),
 ('MALAYBALAY'),
@@ -82,6 +96,7 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('MARBEL'),
 ('MATI'),
 ('MATINA'),
+('MEGA - SHOWROOM'),
 ('MIAG-AO'),
 ('MIDSAYAP'),
 ('MUNTINLUPA'),
@@ -97,14 +112,14 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('PARAÑAQUE'),
 ('PASSI'),
 ('PINAMALAYAN'),
-('PLAZA'),
+('PLAZA - DELGADO'),
 ('POLOMOLOK'),
 ('POTOTAN'),
 ('PUERTO GALERA'),
 ('QUEZON'),
 ('RIZAL PALAWAN'),
-('ROXAS'),
-('ROXAS DOS'),
+('ROXAS - ROXAS AVENUE'),
+('ROXAS - LAWA-AN'),
 ('ROXAS MINDORO'),
 ('SABLAYAN'),
 ('SAGAY'),
@@ -116,7 +131,7 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('SAN PEDRO'),
 ('SAN PEDRO PALAWAN'),
 ('SARA'),
-('SHOWROOM'),
+('SILANG CAVITE'),
 ('SILAY'),
 ('SINDANGAN'),
 ('STA. BARBARA'),
@@ -126,8 +141,8 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('TACLOBAN'),
 ('TACURONG'),
 ('TAGBILARAN'),
-('TAGUM'),
-('TAGUM DOS'),
+('TAGUM - QUEZON'),
+('TAGUM - BONIFACIO'),
 ('TALIBON'),
 ('TANAY RIZAL'),
 ('TANDAG'),
@@ -138,8 +153,8 @@ $insertBranch = $conn->prepare("INSERT INTO branches (branch) VALUES
 ('VALENCIA'),
 ('VIAC'),
 ('VICTORIAS'),
-('ZAMBOANGA'),
-('ZAMBOANGA DOS');
+('ZAMBOANGA - TETUAN'),
+('ZAMBOANGA - PUTIK');
 ");
 
 if ($insertBranch->execute()) {

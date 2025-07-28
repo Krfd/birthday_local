@@ -1,14 +1,42 @@
 $(document).ready(function () {
   $("#formAddUser").submit(function (e) {
     e.preventDefault();
-    var userData = $(this).serialize();
+    const deptValue = $("#dept").val();
+
+    if (deptValue === "ONLINE") {
+      const checkboxes = document.querySelectorAll('input[name="region[]"]');
+      const isChecked = Array.from(checkboxes).some(
+        (checkbox) => checkbox.checked
+      );
+
+      if (!isChecked) {
+        e.preventDefault();
+        Swal.fire({
+          icon: "warning",
+          title: "Region is a required field",
+          text: "Please select at least 1 region",
+          showConfirmButton: true,
+          confirmButtonText: "OKAY",
+          allowOutsideClick: false,
+          customClass: {
+            popup: "small-alert",
+            title: "small-title",
+            content: "small-content",
+          },
+        });
+        return;
+      }
+    }
+
+    const userData = $(this).serialize();
 
     $.ajax({
       type: "POST",
       url: "functions/addUser.php",
       data: userData,
       success: function (res) {
-        switch (res) {
+        console.log("Response:", JSON.stringify(res));
+        switch (res.trim()) {
           case "added":
             Swal.fire({
               icon: "success",

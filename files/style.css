@@ -1,15 +1,18 @@
+@font-face {
+    font-family: 'Martellas';
+    src: url('../fonts/martellas.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 body {
-    background: linear-gradient(135deg, #e0eafc, #cfdef3);
-    display: flex;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-family: sans-serif;
+    background: url("assets/img/background.jpg");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 #invoice-display {
-    font-size: 3em;
+    font-size: 4em;
     color: #333;
 }
 
@@ -19,7 +22,7 @@ body {
 
 .digit.rolling {
     animation: rollBounce 0.2s ease-out;
-    border: 2px solid #007bff !important;
+    border: 5px solid #4f2b0e !important;
 }
 
 @keyframes rollBounce {
@@ -38,7 +41,7 @@ body {
 
 .digit.locked {
     animation: bounceIn 0.4s ease;
-    border: 2px solid #28a745 !important;
+    border: 5px solid #ffce00 !important;
 }
 
 @keyframes bounceIn {
@@ -61,30 +64,9 @@ body {
     }
 }
 
-#winner-display {
-    margin-top: 50px;
-    font-size: 3em;
-    color: green;
-    min-height: 50px;
-}
-
-button {
-    padding: 10px 20px;
-    font-size: 1em;
-}
-
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-.chance-display {
-    display: none;
-}
-
 .digit {
-    width: 70px;
-    height: 90px;
+    width: 80px;
+    height: 100px;
     background: #f0f0f0;
     /* slightly darker than before for more contrast */
     border-radius: 20px;
@@ -96,12 +78,11 @@ button:disabled {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: bold;
-    color: #333;
     text-align: center;
     transition: all 0.2s ease;
-    border: 2px solid #007bff !important;
+    border: 5px solid #4f2b0e !important;
 }
 
 .digit:hover {
@@ -111,4 +92,15 @@ button:disabled {
 
 .digit:active {
     box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+}
+
+.font {
+    color: #ffce00;
+        text-shadow:
+            -5px -5px 0 #4f2b0e,
+            5px -5px 0 #4f2b0e,
+            -5px 5px 0 #4f2b0e,
+            5px 5px 0 #4f2b0e;
+        letter-spacing: 5px;
+        font-family: 'Martellas', sans-serif;
 }
