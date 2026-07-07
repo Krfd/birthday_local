@@ -22,10 +22,18 @@ let pollingInterval = setInterval(() => {
         return;
       }
 
+      console.log("SYNC RESPONSE:", state);
+
       currentRegion = state.region?.trim() || "";
       currentCategory = state.category?.trim() || "";
       currentPrize = state.prize?.trim() || "";
       finalInvoice = state.finalInvoice?.trim() || "";
+
+      console.log("CURRENT:", {
+        currentRegion,
+        currentCategory,
+        currentPrize,
+      });
 
       // excludedTicketNumbers = new Set(state.excludedTicketNumbers || []);
       // excludedCustomerNames = new Set(state.excludedCustomerNames || []);
@@ -45,7 +53,7 @@ let pollingInterval = setInterval(() => {
       }
     })
     .catch((err) => console.error("Polling error:", err));
-}, 1000);
+}, 2000);
 
 // Fetch entries
 fetch("api/getEntries.php")
@@ -89,6 +97,7 @@ fetch("api/getEntries.php")
       finalInvoice = state.finalInvoice;
       hasStarted = true;
       startRaffle();
+      // console.log(`RAFFLE SHOULD START HERE!`);
     }
   });
 
@@ -120,7 +129,7 @@ function startRaffle() {
   // );
   const availableInvoices = invoices.filter((ticket) => {
     const user = users.find((u) =>
-      u.ticketNumbers.map(String).includes(ticket)
+      u.ticketNumbers.map(String).includes(ticket),
     );
     return (
       !excludedTicketNumbers.has(ticket) &&
@@ -130,9 +139,8 @@ function startRaffle() {
   });
 
   if (availableInvoices.length === 0) {
-    document.getElementById(
-      "winner-display"
-    ).innerHTML = `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
+    document.getElementById("winner-display").innerHTML =
+      `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
     isRolling = false;
     hasStarted = false;
     finalInvoice = "";
@@ -143,8 +151,6 @@ function startRaffle() {
       body: JSON.stringify({
         status: "done",
         finalInvoice,
-        // excludedTicketNumbers,
-        // excludedCustomerNames,
         excludedTicketNumbers: Array.from(excludedTicketNumbers),
         excludedCustomerNames: Array.from(excludedCustomerNames),
         region: currentRegion,
@@ -170,6 +176,9 @@ function startRaffle() {
     const winnerIndex =
       crypto.getRandomValues(new Uint32Array(1))[0] % availableInvoices.length;
     finalInvoice = availableInvoices[winnerIndex];
+    console.log(
+      `WINNER INDEX : ${winnerIndex} | FINAL INVOICE : ${finalInvoice}`,
+    );
 
     fetch("sync.php", {
       method: "POST",
@@ -177,6 +186,10 @@ function startRaffle() {
       body: JSON.stringify({
         status: "rolling",
         finalInvoice,
+        // ADDED
+        region: currentRegion,
+        category: currentCategory,
+        prize: currentPrize,
       }),
     });
   }
@@ -243,7 +256,55 @@ function startRaffle() {
   });
 }
 
+// function submitWinnerDetails(winnerName, winnerTicket) {
+//   console.log(
+//     `Submitting winner details: ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
+//   );
+//   fetch("./functions/submit-winner.php", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       winnerName,
+//       winnerTicket,
+//       region: currentRegion,
+//       category: currentCategory,
+//       prize: currentPrize,
+//     }),
+//   })
+//     .then((response) => {
+//       // Check if the response is OK (status 200-299)
+//       if (!response.ok) {
+//         throw new Error("Network response was not ok");
+//       }
+
+//       // Check if the response is empty before parsing JSON
+//       return response.text().then((text) => {
+//         if (text) {
+//           return JSON.parse(text); // Parse JSON if the response is not empty
+//         } else {
+//           throw new Error("Empty response from server");
+//         }
+//       });
+//     })
+//     .then((data) => {
+//       if (data.status === "success") {
+//       } else {
+//         console.error("Error:", data.message);
+//       }
+//     })
+//     .catch((error) => {
+//       console.error("Error submitting winner details:", error);
+//       alert("There was an error submitting the winner details.");
+//     });
+// }
+
 function submitWinnerDetails(winnerName, winnerTicket) {
+  console.log(
+    `Submitting winner details: ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
+  );
+
   fetch("./functions/submit-winner.php", {
     method: "POST",
     headers: {
@@ -257,37 +318,38 @@ function submitWinnerDetails(winnerName, winnerTicket) {
       prize: currentPrize,
     }),
   })
-    .then((response) => {
-      // Check if the response is OK (status 200-299)
+    .then(async (response) => {
+      // console.log("HTTP STATUS:", response.status);
+
+      const text = await response.text();
+
+      // console.log("RAW PHP RESPONSE:");
+      // console.log(text);
+
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error(`HTTP ${response.status}: ${text}`);
       }
 
-      // Check if the response is empty before parsing JSON
-      return response.text().then((text) => {
-        if (text) {
-          return JSON.parse(text); // Parse JSON if the response is not empty
-        } else {
-          throw new Error("Empty response from server");
-        }
-      });
+      return JSON.parse(text);
     })
     .then((data) => {
+      // console.log("PARSED RESPONSE:", data);
+
       if (data.status === "success") {
+        // console.log("Winner saved successfully");
       } else {
-        console.error("Error:", data.message);
+        throw new Error(data.message);
       }
     })
     .catch((error) => {
-      console.error("Error submitting winner details:", error);
-      alert("There was an error submitting the winner details.");
+      console.error("ACTUAL ERROR:", error);
     });
 }
 
 function showWinner() {
   const winnerTicket = parseInt(finalInvoice);
   const winnerUser = users.find((user) =>
-    user.ticketNumbers.map(String).includes(String(winnerTicket))
+    user.ticketNumbers.map(String).includes(String(winnerTicket)),
   );
 
   let winnerName = winnerUser ? winnerUser.customerName : "Unknown";
@@ -303,14 +365,14 @@ function showWinner() {
   // THEIR NAME WON'T BE SELECTED AGAIN
   if (winnerUser) {
     winnerUser.ticketNumbers.forEach((ticket) =>
-      excludedTicketNumbers.add(String(ticket))
+      excludedTicketNumbers.add(String(ticket)),
     );
 
     excludedCustomerNames.add(winnerUser.customerName);
 
     users = users.filter((u) => u.customerName !== winnerUser.customerName);
     invoices = invoices.filter(
-      (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket))
+      (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket)),
     );
     names = users.map((u) => u.customerName); // Make sure names are updated
   }
@@ -319,10 +381,6 @@ function showWinner() {
 
   winnerDisplay.innerHTML = `<strong data-text="${winnerName}" class="winnerFont">${winnerName}</strong>`; // Final winner name
   showConfetti(winnerName, winnerTicket);
-
-  console.log(
-    `Submitting winner with: ${winnerName} - ${winnerTicket} - ${currentRegion} -  ${currentCategory} - ${currentPrize}`
-  );
   submitWinnerDetails(winnerName, winnerTicket);
 }
 

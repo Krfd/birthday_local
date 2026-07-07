@@ -21,7 +21,6 @@ $password = "SB1Admin";
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    echo "Connected";
 } catch (PDOException $e) {
     if (function_exists('errorHandler')) {
         errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());

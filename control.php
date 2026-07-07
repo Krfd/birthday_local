@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="css/vendor/bootstrap-icons.css" />
   <link rel="stylesheet" href="css/control.css" />
   <style>
+    body {
+      background: #c2ddff;
+    }
+
     #winnerTable,
     #winnerTable th,
     #winnerTable td {
@@ -69,10 +73,10 @@
     </div>
   </div>
 
-  <button id="logout-btn" class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
-    <i class="bi bi-box-arrow-left"></i>
+  <button id="logout-btn" style="height: 50px; width: 50px" class="btn border border-danger bg-danger-subtle btn-sm position-absolute rounded-5 top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
+    <i class="bi bi-box-arrow-left d-flex justify-content-center align-items-center text-danger"></i>
   </button>
-  <div class="container d-flex justify-content-center mb-5 w-auto p-3 bg-primary-subtle shadow rounded-1">
+  <div class="container d-flex justify-content-center mb-5 w-auto p-3 bg-light shadow-sm rounded-2">
     <div class="d-flex flex-column gap-1" style="width: 550px">
       <div class="d-flex align-items-center gap-3">
         <label for="location" class="form-label fw-semibold">Location: </label>
@@ -115,22 +119,24 @@
           </div>
           <div id="winnerTable_filter" class="dataTables_filter"></div> <!-- DataTables will auto-populate this -->
         </div>
-        <table
-          class="table datatables table-hover mt-3 text-center table-success table-striped"
-          id="winnerTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>E-Ticket</th>
-              <th>CUSTOMER</th>
-              <th>AREA</th>
-              <th>CATEGORY</th>
-              <th>PRIZE</th>
-              <th>TIMESTAMP</th>
-            </tr>
-          </thead>
-          <tbody id="winnerTableBody"></tbody>
-        </table>
+        <div class="table-responsive">
+          <table
+            class="table datatables table-hover mt-3 text-center table-light table-striped"
+            id="winnerTable">
+            <thead class="border">
+              <tr>
+                <th>#</th>
+                <th>E-Ticket</th>
+                <th>CUSTOMER</th>
+                <th>AREA</th>
+                <th>CATEGORY</th>
+                <th>PRIZE</th>
+                <th>TIMESTAMP</th>
+              </tr>
+            </thead>
+            <tbody id="winnerTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -145,15 +151,32 @@
     const prize = document.getElementById('prize');
     const startBtn = document.getElementById('start-btn');
 
+    // let categoryController;
+
     async function fetchCategories() {
       const loc = region.value;
       category.innerHTML = '<option value="" selected>Select Category</option>';
       prize.value = '';
       checkInputs();
 
+      // if (!loc) return;
+
+      // if (categoryController) {
+      //   categoryController.abort();
+      // }
+
+      // categoryController = new AbortController();
+
       if (loc) {
-        const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`);
+        // try {
+        const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`,
+          // {
+          //   signal: categoryController.signal
+          // }
+        );
         const categories = await res.json();
+
+        // console.log(`FETCHED CATEGORIES : ${JSON.stringify(categories)}`);
 
         categories.forEach(cat => {
           const option = document.createElement('option');
@@ -161,32 +184,66 @@
           option.textContent = cat;
           category.appendChild(option);
         });
+        // } catch (err) {
+        //   if (err.name !== "AbortError")
+        //     console.error(err);
+        // }
       }
     }
+
+    // let loadingPrize = false;
+    // let prizeController;
 
     async function fetchPrize() {
       const loc = region.value;
       const cat = category.value;
+      // loadingPrize = true;
+      startBtn.disabled = true
+
+      console.log(`FETCHING PRIZE FOR LOCATION: ${loc}, CATEGORY: ${cat}`);
+
+      // if (!loc || !cat) return;
+
+      // if (prizeController) {
+      //   prizeController.abort();
+      // }
+
+      // prizeController = new AbortController();
 
       if (loc && cat) {
-        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`);
+        // try {
+        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`,
+          // {
+          //   signal: prizeController.signal
+          // }
+        );
         const data = await res.json();
 
         if (data && data.product) {
           prize.value = `${data.product} - ${data.brand} (${data.model})`;
-        } else {
-          prize.value = '';
         }
-      } else {
-        prize.value = '';
+        // else {
+        //   prize.value = '';
+        // }
+        // } else {
+        //   prize.value = '';
       }
-
+      // loadingPrize = false;
       checkInputs();
+      // } catch (err) {
+      //   if (err.name !== "AbortError")
+      //     console.error(err);
+      // }
     }
 
     function checkInputs() {
-      const isValid = region.value && category.value && prize.value.trim();
-      startBtn.disabled = !isValid;
+      // const isValid = region.value && category.value && prize.value.trim();
+      // startBtn.disabled = !isValid;
+      startBtn.disabled =
+        // loadingPrize ||
+        !region.value ||
+        !category.value ||
+        !prize.value.trim();
     }
 
     region.addEventListener('change', fetchCategories);
@@ -201,9 +258,15 @@
       pageLength: 8,
       lengthChange: false,
       columnDefs: [{
-        targets: "_all",
-        className: "text-center"
-      }, ],
+          targets: "_all",
+          className: "text-center"
+        },
+        {
+          targets: 5, // Prize column
+          width: "300px",
+          className: "text-start"
+        }
+      ],
       order: [
         [0, "desc"]
       ],
@@ -215,19 +278,18 @@
     let lastWinnerId = 0;
     let winnerInterval = null;
 
-    startButton.addEventListener("click", () => {
-      fetch("sync.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "rolling"
-        }),
-      });
-      startButton.disabled = true;
-      console.log("Button disabled");
-    });
+    // startButton.addEventListener("click", () => {
+    //   fetch("sync.php", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({
+    //       status: "rolling"
+    //     }),
+    //   });
+    //   startButton.disabled = true;
+    // });
 
     // Load all winners and update UI
     function loadWinners() {
@@ -242,7 +304,6 @@
             if (newestId > lastWinnerId) {
               lastWinnerId = newestId;
               renderWinners(winners);
-              console.log("New winner detected!");
               startButton.disabled = false;
 
               // Stop polling after new winner is found
@@ -302,7 +363,7 @@
         category: selectedCategory,
         prize: selectedPrize
       }
-
+      console.log("Payload:", payload);
       fetch("sync.php", {
         method: "POST",
         headers: {
@@ -315,8 +376,6 @@
       if (winnerInterval) clearInterval(winnerInterval);
       winnerInterval = setInterval(loadWinners, 2000);
     });
-
-
 
     // EXPORT CSV FILE FOR WINNERS
     document.getElementById("downloadCSV").addEventListener("click", function() {

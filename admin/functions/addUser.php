@@ -3,7 +3,8 @@
 ini_set('display_errors', 0);
 error_reporting(0);
 
-include("conn.php");
+// include("conn.php");
+include("../../config/connection.php");
 
 if (isset($_POST['username']) && !empty($_POST['username']) && isset($_POST['dept']) && !empty($_POST['dept'])) {
     $user = trim(htmlspecialchars($_POST['username']));

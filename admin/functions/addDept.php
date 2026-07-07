@@ -1,6 +1,7 @@
 <?php
 
-include("conn.php");
+// include("conn.php");
+include("../../config/connection.php");
 
 $dept = trim(htmlspecialchars($_POST['department']));
 

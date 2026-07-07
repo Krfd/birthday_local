@@ -3,7 +3,16 @@
 include("../config/connection.php");
 
 try {
-    $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM current_entries WHERE Excluded = 0");
+    // $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM current_entries WHERE Excluded = 0");
+    $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number
+    FROM current_entries ce
+        WHERE ce.Excluded = 0
+        AND NOT EXISTS (
+            SELECT 1
+            FROM winners w
+            WHERE w.winningTicket = ce.Ticket_Number
+        )
+    ");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -32,6 +41,5 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
-    // Optionally log the error for debugging
     errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
 }

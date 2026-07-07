@@ -15,8 +15,7 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-include("config/connection.php");
+include("../config/connection.php");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -29,18 +28,11 @@ try {
         $winnerCategory = $data['category'];
         $winnerPrize = $data['prize'];
 
-        $winner = $conn->prepare("INSERT INTO winners (winner, winningTicket, area, category, prize, dateWon) VALUES (:winner, :winningTicket, :area, :category, :prize, SYSDATETIME())");
-        $winner->bindParam(":winner", $winnerName);
-        $winner->bindParam(":winningTicket", $winnerTicket);
-        $winner->bindParam(":area", $winnerArea);
-        $winner->bindParam(":category", $winnerCategory);
-        $winner->bindParam(":prize", $winnerPrize);
-        $winner->execute();
+        $ins_winner = $conn->prepare("EXEC insertWinner ?,?,?,?,?");
+        $ins_winner->execute([$winnerName, $winnerTicket, $winnerArea, $winnerCategory, $winnerPrize]);
 
-        // Send a success response
         echo json_encode(["status" => "success", "message" => "Winner details submitted"]);
     } else {
-        // Send an error response if data is not valid
         echo json_encode(["status" => "error", "message" => "Invalid data"]);
     }
 } catch (PDOException $e) {

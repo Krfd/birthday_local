@@ -1,6 +1,7 @@
 <?php
 
-include("conn.php");
+// include("conn.php");
+include("../../config/connection.php");
 
 $user_id = htmlspecialchars($_POST['user_id']);
 $old_password = htmlspecialchars($_POST['old']);
