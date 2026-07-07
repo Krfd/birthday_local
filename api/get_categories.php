@@ -16,7 +16,7 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 set_error_handler("errorHandler");
 
 $servername = "192.168.101.68";
-$db = "RAFFLE";
+$db = "ANNIVERSAYA";
 $username = "sa";
 $password = "SB1Admin";
 

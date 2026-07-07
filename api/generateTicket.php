@@ -44,7 +44,7 @@ function generate_name_variants($str)
 }
 
 $servername = "192.168.101.68";
-$db = "RAFFLE";
+$db = "ANNIVERSAYA";
 $username = "sa";
 $password = "SB1Admin";
 
@@ -253,130 +253,6 @@ try {
                             $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
                         }
                     } else {
-                        // $existing_check->execute([
-                        //     $branch_val,
-                        //     $inv_val,
-                        //     $first_name,
-                        //     $last_name,
-                        //     $suffix,
-                        //     $last_name,
-                        //     $first_name,
-                        //     $suffix
-                        // ]);
-
-                        // if (!$existing_check->fetchColumn()) {
-                        //     $sap_docnum = $validation_result['DocNum'] ?? null;
-
-                        //     if ($sap_docnum !== null) {
-                        //         $conn->prepare("UPDATE [$table_name] SET SAPDocNum = ? WHERE id = ?")->execute([$sap_docnum, $docId]);
-                        //     }
-
-                        //     // ✅ Check cancel fields before inserting
-                        //     $cancel_sap_doc = trim($validation_result['CancelSISAPDoc'] ?? '');
-                        //     $cancel_si_no = trim($validation_result['CancelSINo'] ?? '');
-                        //     $cancel_si_date = trim($validation_result['CancelSIDate'] ?? '');
-
-                        //     if ($cancel_sap_doc !== '' || $cancel_si_no !== '' || $cancel_si_date !== '' && $cancel === 'N') {
-                        //         $doc_date = $validation_result['DocDate'] ?? '';
-                        //         $cancel_date = $validation_result['CancelSIDate'] ?? '';
-
-                        //         $insert_target = 'mismatch'; // default
-
-                        //         if ($doc_date !== '' && $cancel_date !== '') {
-                        //             $doc_month = date('Y-m', strtotime($doc_date));
-                        //             $cancel_month = date('Y-m', strtotime($cancel_date));
-
-                        //             // Check if both are in the same month AND in June
-                        //             if ($doc_month === $cancel_month && date('m', strtotime($cancel_date)) === '06') {
-                        //                 $insert_target = 'mismatch';
-                        //             } else {
-                        //                 $insert_target = 'invalid_invoices';
-                        //             }
-                        //         }
-
-                        //         if ($insert_target === 'mismatch') {
-                        //             $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-                        //             $exists_check->execute([$docId]);
-                        //             if (!$exists_check->fetchColumn()) {
-                        //                 $mismatch_stmt->execute([
-                        //                     $docId,
-                        //                     $branch_val,
-                        //                     $first_name,
-                        //                     $last_name,
-                        //                     $suffix,
-                        //                     $inv_val,
-                        //                     $mobile_val,
-                        //                     $email_val,
-                        //                     'cancellation',
-                        //                     $postal_address,
-                        //                     $updated
-                        //                 ]);
-                        //             }
-                        //         } else {
-                        //             $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
-                        //             $exists_invalid->execute([$docId]);
-                        //             if (!$exists_invalid->fetchColumn()) {
-                        //                 $invalid_invoice_stmt->execute([
-                        //                     $docId,
-                        //                     $branch_val,
-                        //                     $first_name,
-                        //                     $last_name,
-                        //                     $suffix,
-                        //                     $inv_val,
-                        //                     $mobile_val,
-                        //                     $email_val,
-                        //                     'cancellation',
-                        //                     $postal_address
-                        //                 ]);
-                        //             }
-                        //         }
-
-                        //         $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                        //         $exists_overall->execute([$docId]);
-                        //         if (!$exists_overall->fetchColumn()) {
-                        //             overall(
-                        //                 $overall,
-                        //                 $docId,
-                        //                 $branch_val,
-                        //                 $first_name,
-                        //                 $last_name,
-                        //                 $suffix,
-                        //                 $inv_val,
-                        //                 $mobile_val,
-                        //                 $email_val,
-                        //                 $postal_address,
-                        //                 'cancellation'
-                        //             );
-                        //         }
-
-                        //         $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = ?")->execute([$docId]);
-                        //         continue; // ⛔ skip raffle insertion
-                        //     }
-
-                        //     // ✅ Proceed with ticket insertion if cancellation fields are empty
-                        //     for ($i = 0; $i < $ticket_count; $i++) {
-                        //         $raffle_stmt->execute([
-                        //             $ticket_count,
-                        //             $sap_docnum,
-                        //             $branch_val,
-                        //             $first_name,
-                        //             $last_name,
-                        //             $suffix,
-                        //             $inv_val,
-                        //             $mobile_val,
-                        //             $email_val,
-                        //             $postal_address,
-                        //             0,
-                        //             0,
-                        //         ]);
-                        //     }
-
-                        //     $ticketed += $ticket_count;
-                        //     $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$docId]);
-                        // }
-
-
-
                         $existing_check->execute([
                             $branch_val,
                             $inv_val,

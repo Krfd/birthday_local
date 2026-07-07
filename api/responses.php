@@ -17,7 +17,7 @@ date_default_timezone_set('Asia/Manila');
 
 // DB connection
 $servername = "192.168.101.68";
-$db = "RAFFLE";
+$db = "ANNIVERSAYA";
 $username = "sa";
 $password = "SB1Admin";
 
@@ -27,7 +27,6 @@ try {
 
     // Fetch CSV
     $csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhn0T0QXcsdnrllDEsSo4sQxAiFJ5jlbvYGiDkON_NHzE6hB7d10XSlaM-2qvWinKld7qFRXErkN3h/pub?gid=1957502855&single=true&output=csv';
-    // $csv_content = file_get_contents($csv_url);
     $csv_content = mb_convert_encoding(file_get_contents($csv_url), 'UTF-8', 'auto');
 
     // DEFINE ENCRYPTION KEY AND INITIALIZATION VECTOR

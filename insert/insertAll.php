@@ -1,5 +1,7 @@
 <?php
 
+include("./config/connection.php");
+
 $authorized_users = ['karlalooo' => 'iap', 'merruel' => 'iap', 'jummie' => 'iap'];
 $user_ = $_SERVER['PHP_AUTH_USER'] ?? '';
 $pass_ = $_SERVER['PHP_AUTH_PW'] ?? '';
@@ -13,10 +15,12 @@ if (!isset($authorized_users[$user_]) || $authorized_users[$user_] !== $pass_) {
     exit;
 }
 
-$servername = "192.168.101.68";
-$db = "RAFFLE";
-$username = "sa";
-$password = "SB1Admin";
+// $servername = "192.168.101.68";
+// $db = "ANNIVERSAYA";
+// $username = "sa";
+// $password = "SB1Admin";
+
+
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);

@@ -1,9 +1,10 @@
 <?php
 
-$servername = "192.168.101.68";
-$db = "RAFFLE";
-$username = "sa";
-$password = "SB1Admin";
+include("./config/connection.php");
+// $servername = "192.168.101.68";
+// $db = "ANNIVERSAYA";
+// $username = "sa";
+// $password = "SB1Admin";
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);

@@ -3,7 +3,6 @@
 include("../config/connection.php");
 
 try {
-    // $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM raffle_entries WHERE Excluded = 0");
     $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM current_entries WHERE Excluded = 0");
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

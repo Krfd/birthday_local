@@ -14,15 +14,15 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 set_error_handler("errorHandler");
 
 $servername = "192.168.101.68";
-$db = "RAFFLE";
+$db = "ANNIVERSAYA";
 $username = "sa";
 $password = "SB1Admin";
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    echo "Connected";
 } catch (PDOException $e) {
-    // Optional: custom error logging
     if (function_exists('errorHandler')) {
         errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
     }
