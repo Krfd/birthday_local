@@ -1,4 +1,5 @@
 <?php
+// include("../config/connection.php");
 session_start();
 
 function errorHandler($errno, $errstr, $errfile, $errline)
@@ -11,7 +12,7 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 set_error_handler("errorHandler");
 
 $servername = "192.168.101.68";
-$db = "RAFFLE";
+$db = "ANNIVERSAYA";
 $username = "sa";
 $password = "SB1Admin";
 
@@ -33,9 +34,10 @@ $pass = htmlspecialchars($_POST['password']);
 
 try {
 
-    $query = $conn->prepare("SELECT id, username, password, dept, disabled, isAdmin FROM users WHERE username = :username");
-    $query->bindParam(":username", $name);
-    $query->execute();
+    // $query = $conn->prepare("SELECT id, username, password, dept, disabled, isAdmin FROM users WHERE username = :username");
+    $query = $conn->prepare("EXEC Login ?");
+    // $query->bindParam(":username", $name);
+    $query->execute([$name]);
 
     $rows = $query->fetchAll(PDO::FETCH_OBJ);
 

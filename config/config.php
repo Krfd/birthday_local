@@ -33,7 +33,7 @@ if (!isset($_SESSION['id'])) {
     header("Location: ../index.html");
 }
 
-$id = htmlspecialchars($_SESSION['id']);
+$id = $_SESSION['id'];
 
 try {
     $data = $conn->prepare("SELECT * FROM users WHERE id = :id");

@@ -14,9 +14,10 @@
   <link rel="stylessheet" href="../css/sweetalert2.min.css" />
   <style>
     body {
-      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      /* background: linear-gradient(135deg, #e0eafc, #cfdef3); */
       height: 100vh;
       font-family: sans-serif;
+      background: #c2ddff;
     }
 
     /* Firefox */
@@ -137,17 +138,21 @@
                 <select name="dept" id="dept" class="form-select mt-2" required>
                   <?php
 
-                  $depts = $conn->prepare("SELECT department FROM departments ORDER BY department");
-                  $depts->execute();
+                  try {
+                    $depts = $conn->prepare("EXEC DisplayDepartments");
+                    $depts->execute();
 
-                  $getDepts = $depts->fetchAll(PDO::FETCH_OBJ);
+                    $getDepts = $depts->fetchAll(PDO::FETCH_OBJ);
 
-                  if ($getDepts) {
-                    foreach ($getDepts as $department) {
-                      echo '<option>' . $department->department . '</option>';
+                    if ($getDepts) {
+                      foreach ($getDepts as $department) {
+                        echo '<option>' . $department->department . '</option>';
+                      }
+                    } else {
+                      echo '<option value="" selected>No Department</option>';
                     }
-                  } else {
-                    echo '<option value="" selected>No Department</option>';
+                  } catch (PDOException $e) {
+                    errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                   }
 
                   ?>
@@ -160,42 +165,45 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                 <?php
 
-                $usedRegions = [];
+                try {
+                  $usedRegions = [];
 
-                $stmtUsers = $conn->prepare("SELECT region FROM users WHERE region IS NOT NULL");
-                $stmtUsers->execute();
-                $userRegions = $stmtUsers->fetchAll(PDO::FETCH_COLUMN);
+                  $stmtUsers = $conn->prepare("EXEC DisplayRegions");
+                  $stmtUsers->execute();
+                  $userRegions = $stmtUsers->fetchAll(PDO::FETCH_COLUMN);
 
-                foreach ($userRegions as $userRegionStr) {
-                  if (!empty($userRegionStr)) {
-                    $regionsArray = explode(',', $userRegionStr);
-                    foreach ($regionsArray as $reg) {
-                      $usedRegions[] = trim($reg);
+                  foreach ($userRegions as $userRegionStr) {
+                    if (!empty($userRegionStr)) {
+                      $regionsArray = explode(',', $userRegionStr);
+                      foreach ($regionsArray as $reg) {
+                        $usedRegions[] = trim($reg);
+                      }
                     }
                   }
-                }
 
-                // Remove duplicates
-                $usedRegions = array_unique($usedRegions);
+                  // Remove duplicates
+                  $usedRegions = array_unique($usedRegions);
 
-                // Step 2: Get all available regions from `regions` table
-                $regionLists = $conn->prepare("SELECT id, region FROM regions ORDER BY region");
-                $regionLists->execute();
-                $getRegions = $regionLists->fetchAll(PDO::FETCH_OBJ);
+                  $regionLists = $conn->prepare("EXEC Get_Region_List");
+                  $regionLists->execute();
+                  $getRegions = $regionLists->fetchAll(PDO::FETCH_OBJ);
 
-                if ($getRegions) {
-                  foreach ($getRegions as $reg) {
-                    $region_id = $reg->id;
-                    $region = $reg->region;
+                  if ($getRegions) {
+                    foreach ($getRegions as $reg) {
+                      $region_id = $reg->id;
+                      $region = $reg->region;
 
-                    // Check if region is already assigned
-                    $isDisabled = in_array($region, $usedRegions) ? 'disabled' : '';
+                      // Check if region is already assigned
+                      $isDisabled = in_array($region, $usedRegions) ? 'disabled' : '';
 
-                    echo '<div>
+                      echo '<div>
                       <input type="checkbox" name="region[]" value="' . htmlspecialchars($region) . '" id="region_' . $region_id . '" ' . $isDisabled . ' />
                       <label for="region_' . $region_id . '">' . htmlspecialchars($region) . '</label>
                     </div>';
+                    }
                   }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                 }
                 ?>
               </div>
@@ -243,15 +251,16 @@
               <tbody>
                 <?php
 
-                $logs = $conn->prepare("SELECT * FROM logs ORDER BY id");
-                $logs->execute();
+                try {
+                  $logs = $conn->prepare("EXEC DisplayLogs");
+                  $logs->execute();
 
-                $getLogs = $logs->fetchAll(PDO::FETCH_OBJ);
+                  $getLogs = $logs->fetchAll(PDO::FETCH_OBJ);
 
-                if ($getLogs) {
-                  foreach ($getLogs as $log) {
+                  if ($getLogs) {
+                    foreach ($getLogs as $log) {
 
-                    echo '<tr>
+                      echo '<tr>
                       <td>' . $log->user_id . '</td> 
                       <td>' . $log->customer_inv . '</td> 
                       <td>' . $log->customer_branch . '</td>
@@ -260,7 +269,10 @@
                       <td>' . $log->dept . '</td>
                       <td style="width: 150px">' . date('F, d, Y - h:i:s A', strtotime($log->modified)) . '</td>
                     </tr>';
+                    }
                   }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                 }
 
                 ?>
@@ -291,7 +303,7 @@
             <table class="table datatables" id="winnerTable">
               <thead>
                 <tr>
-                  <th>E-TICKET</th>
+                  <th class="text-start">E-TICKET</th>
                   <th>CUSTOMER</th>
                   <th>AREA</th>
                   <th>CATEGORY</th>
@@ -302,23 +314,27 @@
               <tbody>
                 <?php
 
-                $winners = $conn->prepare("SELECT * FROM winners ORDER BY id DESC");
-                $winners->execute();
+                try {
+                  $winners = $conn->prepare("EXEC DisplayWinners");
+                  $winners->execute();
 
-                $getWinners = $winners->fetchAll(PDO::FETCH_OBJ);
+                  $getWinners = $winners->fetchAll(PDO::FETCH_OBJ);
 
-                if ($getWinners) {
-                  foreach ($getWinners as $win) {
+                  if ($getWinners) {
+                    foreach ($getWinners as $win) {
 
-                    echo '<tr>
-                      <td>' . $win->winningTicket . '</td> 
+                      echo '<tr>
+                      <td class="text-start">' . $win->winningTicket . '</td> 
                       <td>' . $win->winner . '</td> 
                       <td>' . $win->area . '</td>
                       <td>' . $win->category . '</td>
                       <td>' . $win->prize . '</td>
                     <td>' . date('F. d, Y - h:i:s A', strtotime($win->dateWon)) . '</td>
                     </tr>';
+                    }
                   }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                 }
 
                 ?>
@@ -360,24 +376,24 @@
               <tbody>
                 <?php
 
-                $activities = $conn->prepare("SELECT id, username, dept, prev_pass, new_pass, modified FROM users WHERE dept = 'ONLINE' ORDER BY id");
-                // $activities->bindParam(":id", $userId);
-                $activities->execute();
+                try {
+                  $activities = $conn->prepare("EXEC Get_Security_Logs");
+                  $activities->execute();
 
-                $getPasswords = $activities->fetchAll(PDO::FETCH_OBJ);
+                  $getPasswords = $activities->fetchAll(PDO::FETCH_OBJ);
 
-                if ($getPasswords) {
-                  foreach ($getPasswords as $act) {
+                  if ($getPasswords) {
+                    foreach ($getPasswords as $act) {
 
-                    $prev = $act->prev_pass;
-                    $new = $act->new_pass;
+                      $prev = $act->prev_pass;
+                      $new = $act->new_pass;
 
-                    if (empty($prev) || empty($prev)) {
-                      $prev = 'N/A';
-                      $new = 'N/A';
-                    }
+                      if (empty($prev) || empty($prev)) {
+                        $prev = 'N/A';
+                        $new = 'N/A';
+                      }
 
-                    echo '<tr>
+                      echo '<tr>
                       <td>' . $act->id . '</td> 
                       <td>' . $act->username . '</td> 
                       <td>' . $act->dept . '</td>
@@ -385,9 +401,11 @@
                       <td>' . $new . '</td>
                       <td style="width: 150px">' . date('F, d, Y - h:i:s A', strtotime($act->modified)) . '</td>
                     </tr>';
+                    }
                   }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                 }
-
                 ?>
               </tbody>
             </table>
@@ -423,49 +441,53 @@
               <tbody>
                 <?php
 
-                $controllers = $conn->prepare("SELECT id, username, dept, disabled FROM users WHERE dept != ''");
-                $controllers->execute();
+                try {
+                  $controllers = $conn->prepare("EXEC Get_Online_Access");
+                  $controllers->execute();
 
-                $getController = $controllers->fetchAll(PDO::FETCH_OBJ);
+                  $getController = $controllers->fetchAll(PDO::FETCH_OBJ);
 
-                if ($getController) {
-                  foreach ($getController as $access) {
-                    $access_id = $access->id;
-                    $access_user = $access->username;
-                    $access_dept = $access->dept;
-                    $isDisabled = $access->disabled;
+                  if ($getController) {
+                    foreach ($getController as $access) {
+                      $access_id = $access->id;
+                      $access_user = $access->username;
+                      $access_dept = $access->dept;
+                      $isDisabled = $access->disabled;
 
-                    echo '<tr>
+                      echo '<tr>
                       <td>' . $access_user . '</td>
                       <td>' . $access_dept . '</td>
                       <td>';
 
-                    if ($isDisabled == 1) {
-                      echo '<span class="badge bg-danger-subtle">
+                      if ($isDisabled == 1) {
+                        echo '<span class="badge bg-danger-subtle">
                           <span class="bg-danger rounded-circle d-inline-block me-1" style="width: 10px; height: 10px;"></span>
                           Inactive
                         </span>';
-                    } else {
-                      echo '<span class="badge bg-primary-subtle">
+                      } else {
+                        echo '<span class="badge bg-primary-subtle">
                           <span class="bg-success rounded-circle d-inline-block me-1" style="width: 10px; height: 10px;"></span>
                           Active
                         </span>';
-                    }
+                      }
 
-                    echo '
+                      echo '
                       </td>
                       <td>';
 
-                    if ($isDisabled == 1) {
-                      echo '<button class="btn btn-sm btn-success enable" data-id="' . $access_id . '" title="Enable">Enable</button>'; // <span class="bi bi-check-circle"></span>
-                    } else {
-                      echo '<button class="btn btn-sm btn-danger disable" data-id="' . $access_id . '" title="Disable">Disable</button>'; // <span class="bi bi-ban"></span>
-                    }
+                      if ($isDisabled == 1) {
+                        echo '<button class="btn btn-sm btn-success enable" data-id="' . $access_id . '" title="Enable">Enable</button>'; // <span class="bi bi-check-circle"></span>
+                      } else {
+                        echo '<button class="btn btn-sm btn-danger disable" data-id="' . $access_id . '" title="Disable">Disable</button>'; // <span class="bi bi-ban"></span>
+                      }
 
-                    echo '
+                      echo '
                       </td>
                     </tr>';
+                    }
                   }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
                 }
 
                 ?>
@@ -519,14 +541,12 @@
     </div>
   </div>
 
-
-
   <div class="position-relative py-5">
     <!-- Center Heading -->
     <h1 class="fw-bold text-center m-0 text-uppercase">Administrator</h1>
     <!-- BUTTONS -->
     <div class="container mt-3 d-flex justify-content-center align-items-center gap-3">
-      <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i> <span class="d-none d-md-inline-block">Logout</span></button>
+      <button type="button" class="btn btn-sm btn bg-danger-subtle border border-danger text-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i> <span class="d-none d-md-inline-block">Logout</span></button>
       <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#logs"><i class="bi bi-alarm-fill"></i> <span class="d-none d-md-inline-block">Logs</span></button>
       <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#addDept" title="Add Department"><i class="bi bi-people-fill"></i> <span class="d-none d-md-inline-block">Add Department</span></button>
       <button type="button" class="btn btn-sm btn-light text-dark" data-bs-toggle="modal" data-bs-target="#update" title="Update Password"><i class="bi bi-pen"></i> <span class="d-none d-md-inline-block">Account</span></button>
@@ -557,64 +577,68 @@
             <tbody>
               <?php
 
-              $entries = $conn->prepare("SELECT * FROM raffle_entries ORDER BY Ticket_Number ASC");
-              $entries->execute();
-              $getEntries = $entries->fetchAll(PDO::FETCH_OBJ);
+              try {
+                $entries = $conn->prepare("EXEC Get_Entries");
+                $entries->execute();
+                $getEntries = $entries->fetchAll(PDO::FETCH_OBJ);
 
-              $groupedEntries = [];
+                $groupedEntries = [];
 
-              if ($getEntries) {
-                foreach ($getEntries as $entry) {
-                  $key = $entry->First_Name . '|' . $entry->Last_Name . '|' . $entry->Mobile_Number . '|' . $entry->Email . '|' . $entry->Branch . '|' . $entry->Invoice_Number;
-                  $inv = $entry->Invoice_Number;
-                  $is_excluded = $entry->Excluded;
+                if ($getEntries) {
+                  foreach ($getEntries as $entry) {
+                    $key = $entry->First_Name . '|' . $entry->Last_Name . '|' . $entry->Mobile_Number . '|' . $entry->Email . '|' . $entry->Branch . '|' . $entry->Invoice_Number;
+                    $inv = $entry->Invoice_Number;
+                    $is_excluded = $entry->Excluded;
 
-                  if (!isset($groupedEntries[$key])) {
-                    $groupedEntries[$key] = [
-                      'first' => $entry->First_Name,
-                      'last' => $entry->Last_Name,
-                      'suffix' => $entry->Suffix,
-                      'mobile' => $entry->Mobile_Number,
-                      'email' => $entry->Email,
-                      'branch' => $entry->Branch,
-                      'invoice' => $entry->Invoice_Number,
-                      'is_excluded' => $entry->Excluded,
-                      'tickets' => [],
-                      'total_tickets' => $entry->Counter
-                    ];
+                    if (!isset($groupedEntries[$key])) {
+                      $groupedEntries[$key] = [
+                        'first' => $entry->First_Name,
+                        'last' => $entry->Last_Name,
+                        'suffix' => $entry->Suffix,
+                        'mobile' => $entry->Mobile_Number,
+                        'email' => $entry->Email,
+                        'branch' => $entry->Branch,
+                        'invoice' => $entry->Invoice_Number,
+                        'is_excluded' => $entry->Excluded,
+                        'tickets' => [],
+                        'total_tickets' => $entry->Counter
+                      ];
+                    }
+
+                    $groupedEntries[$key]['tickets'][] = $entry->Ticket_Number;
                   }
 
-                  $groupedEntries[$key]['tickets'][] = $entry->Ticket_Number;
-                }
+                  foreach ($groupedEntries as $data) {
+                    $tickets = $data['tickets'];
+                    sort($tickets);
 
-                foreach ($groupedEntries as $data) {
-                  $tickets = $data['tickets'];
-                  sort($tickets);
+                    if (count($tickets) === 1) {
+                      $ticketDisplay = $tickets[0];
+                    } else {
+                      $ticketDisplay = min($tickets) . ' - ' . max($tickets);
+                    }
 
-                  if (count($tickets) === 1) {
-                    $ticketDisplay = $tickets[0];
-                  } else {
-                    $ticketDisplay = min($tickets) . ' - ' . max($tickets);
-                  }
-
-                  echo '<tr>
+                    echo '<tr>
                           <td>' . $ticketDisplay . '</td>
-                          <td>' . $data['total_tickets'] . '</td>
+                          <td class="text-center">' . $data['total_tickets'] . '</td>
                           <td>' . $data['branch'] . '</td>
                           <td>' . $data['first'] . ' ' . $data['suffix'] . '</td>
                           <td>' . $data['last'] . '</td>
                           <td>' . $data['invoice'] . '</td>
                           <td>' . $data['mobile'] . '</td>
-                          <td>' . $data['email'] . '</td>
+                          <td class="text-center">' . $data['email'] . '</td>
                           <td>';
-                  if ($data['is_excluded'] == 0) {
-                    echo '<button class="btn btn-danger btn-sm exclude" title="Exclude entry" data-inv="' . $data['invoice'] . '" data-branch="' . $data['branch'] . '"><i class="bi bi-ban"></i></button>';
-                  } else {
-                    echo '<button class="btn btn-success btn-sm include" title="Include entry" data-inv="' . $data['invoice'] . '" data-branch="' . $data['branch'] . '"><i class="bi bi-recycle"></i></button>';
-                  }
-                  echo '</td>
+                    if ($data['is_excluded'] == 0) {
+                      echo '<button class="btn btn-danger btn-sm exclude" title="Exclude entry" data-inv="' . $data['invoice'] . '" data-branch="' . $data['branch'] . '"><i class="bi bi-ban"></i></button>';
+                    } else {
+                      echo '<button class="btn btn-success btn-sm include" title="Include entry" data-inv="' . $data['invoice'] . '" data-branch="' . $data['branch'] . '"><i class="bi bi-recycle"></i></button>';
+                    }
+                    echo '</td>
                   </tr>';
+                  }
                 }
+              } catch (PDOException $e) {
+                errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
               }
               ?>
             </tbody>

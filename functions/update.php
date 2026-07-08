@@ -10,9 +10,10 @@ $confirm_password = htmlspecialchars($_POST['confirm']);
 
 try {
 
-    $query = $conn->prepare("SELECT password, username, dept, disabled FROM users WHERE id = :id");
-    $query->bindParam(":id", $user_id);
-    $query->execute();
+    // $query = $conn->prepare("SELECT password, username, dept, disabled FROM users WHERE id = :id");
+    $query = $conn->prepare("EXEC SelectUser ?");
+    // $query->bindParam(":id", $user_id);
+    $query->execute([$user_id]);
 
     $rows = $query->fetchAll(PDO::FETCH_OBJ);
 
@@ -27,12 +28,13 @@ try {
                     exit();
                 } else {
                     $newly_hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-                    $update = $conn->prepare("UPDATE users SET password = :password, updated = 1, prev_pass = :old, new_pass = :new WHERE id = :id");
-                    $update->bindParam(":password", $newly_hashed_password);
-                    $update->bindParam(":old", $old_password);
-                    $update->bindParam(":new", $new_password);
-                    $update->bindParam(":id", $user_id);
-                    $update->execute();
+                    // $update = $conn->prepare("UPDATE users SET password = :password, updated = 1, prev_pass = :old, new_pass = :new WHERE id = :id");
+                    $update = $conn->prepare("EXEC UpdatePass ?,?,?,?");
+                    // $update->bindParam(":password", $newly_hashed_password);
+                    // $update->bindParam(":old", $old_password);
+                    // $update->bindParam(":new", $new_password);
+                    // $update->bindParam(":id", $user_id);
+                    $update->execute([$newly_hashed_password, $old_password, $new_password, $user_id]);
 
                     echo "updated";
                     exit();

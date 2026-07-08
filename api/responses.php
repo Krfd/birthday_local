@@ -111,15 +111,17 @@ try {
         'SILANG CAVITE' => 'SILANG'
     ];
 
-    $stmt = $conn->prepare("INSERT INTO responses (
-    Timestamp, Branch_Purchased, First_Name, Last_Name, Suffix,
-    Invoice_Number, Mobile_Number, Email, Postal_Address, Ref,
-    Validated, InValid, Cancel, SMS
-) VALUES (
-    :timestamp, :branch, :first_name, :last_name, :suffix,
-    :invoice_number, :mobile_number, :email, :postal_address, :ref,
-    :validated, :invalid, :cancel, :sms
-)");
+    //     $stmt = $conn->prepare("INSERT INTO responses (
+    //     Timestamp, Branch_Purchased, First_Name, Last_Name, Suffix,
+    //     Invoice_Number, Mobile_Number, Email, Postal_Address, Ref,
+    //     Validated, InValid, Cancel, SMS
+    // ) VALUES (
+    //     :timestamp, :branch, :first_name, :last_name, :suffix,
+    //     :invoice_number, :mobile_number, :email, :postal_address, :ref,
+    //     :validated, :invalid, :cancel, :sms
+    // )");
+
+    $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?,?,?,?");
 
     $count = 0;
 
@@ -180,36 +182,54 @@ try {
             continue;
         }
 
+        // $stmt->execute([
+        //     // ':timestamp' => $columns[0],
+        //     // ':timestamp' => $timestamp,
+        //     // ':branch' => $normalized_branch,
+        //     // ':first_name' => mb_strtoupper($firstname, 'UTF-8'),
+        //     // ':last_name' => mb_strtoupper($lastname, 'UTF-8'),
+        //     // ':suffix' => isset($suffix) ? mb_strtoupper(trim($suffix), 'UTF-8') : '',
+        //     // ':invoice_number' => $invoice,
+        //     // ':mobile_number' => $mobile,
+        //     // ':email' => strtolower(trim($email)),
+        //     // ':postal_address' => mb_strtoupper($postal, 'UTF-8'),
+        //     // ':ref' => $original_ref,
+        //     // ':validated' => 'N',
+        //     // ':invalid' => 'N',
+        //     // ':cancel' => 'N',
+        //     // ':sms' => 'N'
+        //     ':timestamp' => $columns[0],
+        //     ':branch' => $normalized_branch,
+        //     ':first_name' => mb_strtoupper($columns[2], 'UTF-8'),
+        //     ':last_name' => mb_strtoupper($columns[3], 'UTF-8'),
+        //     ':suffix' => isset($columns[14]) ? mb_strtoupper(trim($columns[14]), 'UTF-8') : '',
+        //     ':invoice_number' => $columns[4],
+        //     ':mobile_number' => $columns[5],
+        //     ':email' => strtolower(trim($columns[6])),
+        //     ':postal_address' => mb_strtoupper($columns[7], 'UTF-8'),
+        //     ':ref' => $original_ref,
+        //     ':validated' => 'N',
+        //     ':invalid' => 'N',
+        //     ':cancel' => 'N',
+        //     ':sms' => 'N'
+        // ]);
+
+
         $stmt->execute([
-            // ':timestamp' => $columns[0],
-            // ':timestamp' => $timestamp,
-            // ':branch' => $normalized_branch,
-            // ':first_name' => mb_strtoupper($firstname, 'UTF-8'),
-            // ':last_name' => mb_strtoupper($lastname, 'UTF-8'),
-            // ':suffix' => isset($suffix) ? mb_strtoupper(trim($suffix), 'UTF-8') : '',
-            // ':invoice_number' => $invoice,
-            // ':mobile_number' => $mobile,
-            // ':email' => strtolower(trim($email)),
-            // ':postal_address' => mb_strtoupper($postal, 'UTF-8'),
-            // ':ref' => $original_ref,
+            $columns[0],
+            $normalized_branch,
+            mb_strtoupper($columns[2], 'UTF-8'),
+            mb_strtoupper($columns[3], 'UTF-8'),
+            isset($columns[14]) ? mb_strtoupper(trim($columns[14]), 'UTF-8') : '',
+            $columns[4],
+            $columns[5],
+            strtolower(trim($columns[6])),
+            mb_strtoupper($columns[7], 'UTF-8'),
+            $original_ref,
             // ':validated' => 'N',
             // ':invalid' => 'N',
             // ':cancel' => 'N',
             // ':sms' => 'N'
-            ':timestamp' => $columns[0],
-            ':branch' => $normalized_branch,
-            ':first_name' => mb_strtoupper($columns[2], 'UTF-8'),
-            ':last_name' => mb_strtoupper($columns[3], 'UTF-8'),
-            ':suffix' => isset($columns[14]) ? mb_strtoupper(trim($columns[14]), 'UTF-8') : '',
-            ':invoice_number' => $columns[4],
-            ':mobile_number' => $columns[5],
-            ':email' => strtolower(trim($columns[6])),
-            ':postal_address' => mb_strtoupper($columns[7], 'UTF-8'),
-            ':ref' => $original_ref,
-            ':validated' => 'N',
-            ':invalid' => 'N',
-            ':cancel' => 'N',
-            ':sms' => 'N'
         ]);
         $count++;
 

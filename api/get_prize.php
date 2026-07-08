@@ -27,8 +27,10 @@ try {
     $category = $_GET['category'] ?? '';
 
     if ($location && $category) {
-        $stmt = $conn->prepare("SELECT product, brand, model FROM prizes WHERE location = :location AND category = :category");
-        $stmt->execute([':location' => $location, ':category' => $category]);
+        // $stmt = $conn->prepare("SELECT product, brand, model FROM prizes WHERE location = :location AND category = :category");
+        $stmt = $conn->prepare("EXEC SelectPrize ?,?");
+        // $stmt->execute([':location' => $location, ':category' => $category]);
+        $stmt->execute([$location, $category]);
         $prize = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // $reset_current_entries = $conn->prepare("TRUNCATE TABLE current_entries");
@@ -36,7 +38,8 @@ try {
 
         $location = strtoupper($location);
 
-        $branch_categories = $conn->prepare("SELECT branch FROM branch_category WHERE area = ?");
+        // $branch_categories = $conn->prepare("SELECT branch FROM branch_category WHERE area = ?");
+        $branch_categories = $conn->prepare("EXEC SelectBranch ?");
         $branch_categories->execute([$location]);
 
         $branches = $branch_categories->fetchAll(PDO::FETCH_COLUMN);

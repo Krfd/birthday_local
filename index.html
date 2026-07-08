@@ -1,20 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
+    <title>The Greatest Anniversary Appliance giveaway</title>
     <link rel="icon" href="assets/img/logo.jpg" />
     <link rel="stylesheet" href="css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/sweetalert2.min.css" />
     <style>
       body {
-        background: linear-gradient(135deg, #e0eafc, #cfdef3);
+        background: #c2ddff;
         min-height: 90vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #f8f9fa;
       }
     </style>
   </head>
@@ -22,11 +21,14 @@
     <form
       id="login"
       method="post"
-      class="shadow p-5 col-10 col-md-6 col-lg-3 rounded-3 bg-white"
+      class="shadow-sm p-5 col-10 col-md-6 col-lg-4 rounded-2 bg-white"
     >
-      <h1 class="text-center fw-bold">Login</h1>
+      <h3 class="text-center text-secondary-emphasis fw-bold">
+        Imperial Appliance Plaza's Anniversaya Raffle
+      </h3>
+      <p class="text-center"><i>"25 Years of Serving Filipino Homes"</i></p>
       <div class="col-12 d-block mx-auto">
-        <div class="col-12 col-md-10 mx-auto">
+        <div class="col-12 mx-auto">
           <label for="username"
             >Username <span class="text-danger">*</span></label
           >
@@ -39,7 +41,7 @@
             required
           />
         </div>
-        <div class="col-12 col-md-10 mx-auto mt-3">
+        <div class="col-12 mx-auto mt-3">
           <label for="password"
             >Password <span class="text-danger">*</span></label
           >
@@ -54,13 +56,13 @@
             required
           />
         </div>
-        <div class="col-12 col-md-10 mx-auto mt-2">
+        <div class="col-12 mx-auto mt-2">
           <input type="checkbox" class="form-check-input" id="showPassword" />
           <label for="showPassword">Show Password</label>
         </div>
         <button
           type="submit"
-          class="btn btn-primary mt-2 w-auto d-block mx-auto"
+          class="btn btn-primary mt-3 w-100 d-block mx-auto"
         >
           Login
         </button>

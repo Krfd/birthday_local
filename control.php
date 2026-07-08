@@ -76,7 +76,10 @@
   <button id="logout-btn" style="height: 50px; width: 50px" class="btn border border-danger bg-danger-subtle btn-sm position-absolute rounded-5 top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
     <i class="bi bi-box-arrow-left d-flex justify-content-center align-items-center text-danger"></i>
   </button>
-  <div class="container d-flex justify-content-center mb-5 w-auto p-3 bg-light shadow-sm rounded-2">
+  <div class="container">
+    <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
+  </div>
+  <div class="container mt-3 d-flex justify-content-center mb-5 w-auto p-3 bg-light shadow-sm rounded-2 gap-5">
     <div class="d-flex flex-column gap-1" style="width: 550px">
       <div class="d-flex align-items-center gap-3">
         <label for="location" class="form-label fw-semibold">Location: </label>
@@ -98,18 +101,27 @@
         <input type="text" class="form-control w-75 ms-auto" name="prize" id="prize" readonly>
       </div>
     </div>
+    <div class="d-none" id="counterContainer">
+      <h2 class="fw-bold text-secondary">Maximum Winner</h2>
+      <div class="d-flex justify-content-center align-items-center gap-1">
+        <h2 class="fw-bold text-success display-2" id="currentPrize">0</h2>
+        <div class="display-3">/</div>
+        <h4 class="fw-semibold text-danger display-5" id="maxPrize">3</h4>
+      </div>
+    </div>
   </div>
-  <div class="container">
+  <!-- <div class="container">
     <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
-  </div>
+  </div> -->
   <div class="container">
-    <div class="text-center mt-3">
+    <!-- <div class="mt-3"> -->
+    <div class="d-flex justify-content-center align-items-center gap-3">
       <button id="start-btn" class="btn btn-primary px-5 fs-4 rounded-5">
         START
       </button>
     </div>
     <div class="mt-5">
-      <h1 class="fw-bold text-success display-5">WINNING BOARD</h1>
+      <h1 class="fw-bold text-success">WINNING BOARD</h1>
       <div class="table-responsive">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
           <div>
@@ -117,7 +129,7 @@
               Download CSV
             </button>
           </div>
-          <div id="winnerTable_filter" class="dataTables_filter"></div> <!-- DataTables will auto-populate this -->
+          <div id="winnerTable_filter" class="dataTables_filter"></div>
         </div>
         <div class="table-responsive">
           <table
@@ -150,8 +162,9 @@
     const category = document.getElementById('category');
     const prize = document.getElementById('prize');
     const startBtn = document.getElementById('start-btn');
-
-    // let categoryController;
+    let raffleRunning = false;
+    let maxPrize = document.getElementById("maxPrize")
+    let counterContainer = document.getElementById("counterContainer")
 
     async function fetchCategories() {
       const loc = region.value;
@@ -159,24 +172,17 @@
       prize.value = '';
       checkInputs();
 
-      // if (!loc) return;
+      console.log(`LOCATION VALUE: ${loc}`)
 
-      // if (categoryController) {
-      //   categoryController.abort();
-      // }
-
-      // categoryController = new AbortController();
+      if (loc || loc === '') {
+        counterContainer.classList.remove("d-block")
+        counterContainer.classList.add("d-none")
+      }
 
       if (loc) {
         // try {
-        const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`,
-          // {
-          //   signal: categoryController.signal
-          // }
-        );
+        const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`, );
         const categories = await res.json();
-
-        // console.log(`FETCHED CATEGORIES : ${JSON.stringify(categories)}`);
 
         categories.forEach(cat => {
           const option = document.createElement('option');
@@ -191,24 +197,12 @@
       }
     }
 
-    // let loadingPrize = false;
-    // let prizeController;
-
     async function fetchPrize() {
       const loc = region.value;
       const cat = category.value;
-      // loadingPrize = true;
       startBtn.disabled = true
 
       console.log(`FETCHING PRIZE FOR LOCATION: ${loc}, CATEGORY: ${cat}`);
-
-      // if (!loc || !cat) return;
-
-      // if (prizeController) {
-      //   prizeController.abort();
-      // }
-
-      // prizeController = new AbortController();
 
       if (loc && cat) {
         // try {
@@ -220,7 +214,11 @@
         const data = await res.json();
 
         if (data && data.product) {
+          counterContainer.classList.remove("d-none")
+          counterContainer.classList.add("d-block")
           prize.value = `${data.product} - ${data.brand} (${data.model})`;
+          maxPrize.textContent = `${data.maxWinner}`
+          console.log(`MAX WINNER : ${data.maxWinner}`)
         }
         // else {
         //   prize.value = '';
@@ -228,7 +226,6 @@
         // } else {
         //   prize.value = '';
       }
-      // loadingPrize = false;
       checkInputs();
       // } catch (err) {
       //   if (err.name !== "AbortError")
@@ -239,11 +236,18 @@
     function checkInputs() {
       // const isValid = region.value && category.value && prize.value.trim();
       // startBtn.disabled = !isValid;
-      startBtn.disabled =
-        // loadingPrize ||
-        !region.value ||
-        !category.value ||
-        !prize.value.trim();
+      // ORIGINAL
+      // startBtn.disabled = !region.value ||
+      //   !category.value ||
+      //   !prize.value.trim();
+
+
+      const isValid =
+        region.value &&
+        category.value &&
+        prize.value.trim();
+
+      startBtn.disabled = raffleRunning || !isValid;
     }
 
     region.addEventListener('change', fetchCategories);
@@ -272,7 +276,7 @@
       ],
     });
 
-    const startButton = document.getElementById("start-btn");
+    // const startButton = document.getElementById("start-btn");
     const winnerTableBody = document.getElementById("winnerTableBody");
 
     let lastWinnerId = 0;
@@ -304,7 +308,10 @@
             if (newestId > lastWinnerId) {
               lastWinnerId = newestId;
               renderWinners(winners);
-              startButton.disabled = false;
+              // startButton.disabled = false;
+              raffleRunning = false;
+              checkInputs();
+              fetchPrize()
 
               // Stop polling after new winner is found
               if (winnerInterval) clearInterval(winnerInterval);
@@ -351,7 +358,11 @@
       });
 
     // START button triggers polling
-    startButton.addEventListener("click", () => {
+    // startButton.addEventListener("click", () => {
+    startBtn.addEventListener("click", () => {
+
+      raffleRunning = true;
+      checkInputs();
 
       const selectedRegion = region.value;
       const selectedCategory = category.value;

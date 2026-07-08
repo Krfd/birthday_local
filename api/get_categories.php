@@ -27,14 +27,15 @@ try {
     $location = $_GET['location'] ?? '';
 
     if ($location) {
-        $stmt = $conn->prepare("SELECT DISTINCT category FROM prizes WHERE location = :location");
-        $stmt->execute([':location' => $location]);
+        // $stmt = $conn->prepare("SELECT DISTINCT category FROM prizes WHERE location = :location");
+        $stmt = $conn->prepare("EXEC Get_Categories ?");
+        // $stmt->execute([':location' => $location]);
+        $stmt->execute([$location]);
         $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo json_encode($categories);
     } else {
         echo json_encode([]);
     }
 } catch (PDOException $e) {
-    // Optional: custom error logging
     errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
 }

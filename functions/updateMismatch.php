@@ -20,9 +20,10 @@ $inv = trim(htmlspecialchars($_POST['inv']));
 
 
 try {
-    $checkCustomer = $conn->prepare("SELECT * FROM mismatch WHERE docId = :docId");
-    $checkCustomer->bindParam(":docId", $docId);
-    $checkCustomer->execute();
+    // $checkCustomer = $conn->prepare("SELECT * FROM mismatch WHERE docId = :docId");
+    $checkCustomer = $conn->prepare("EXEC SelectMismatch ?");
+    // $checkCustomer->bindParam(":docId", $docId);
+    $checkCustomer->execute([$docId]);
 
     $getCustomer = $checkCustomer->fetchAll(PDO::FETCH_OBJ);
 
@@ -32,21 +33,23 @@ try {
 
                 if ($fname !== $first || $lname !== $last) {
                     // Update names only
-                    $stmt1 = $conn->prepare("UPDATE responses SET First_Name = :firstname, Last_Name = :lastname, Suffix = :suffix WHERE id = :id");
-                    $stmt2 = $conn->prepare("UPDATE mismatch SET First_Name = :firstname, Last_Name = :lastname, Suffix = :suffix, Updated = 1 WHERE docId = :docId");
+                    // $stmt1 = $conn->prepare("UPDATE responses SET First_Name = :firstname, Last_Name = :lastname, Suffix = :suffix WHERE id = :id");
+                    $stmt1 = $conn->prepare("EXEC UpdateResponse ?,?,?,?");
+                    // $stmt2 = $conn->prepare("UPDATE mismatch SET First_Name = :firstname, Last_Name = :lastname, Suffix = :suffix, Updated = 1 WHERE docId = :docId");
+                    $stmt2 = $conn->prepare("EXEC UpdateMismatch ?,?,?,?");
 
-                    $stmt1->bindParam(":firstname", $fname);
-                    $stmt1->bindParam(":lastname", $lname);
-                    $stmt1->bindParam(":suffix", $suffix);
-                    $stmt1->bindParam(":id", $docId);
+                    // $stmt1->bindParam(":firstname", $fname);
+                    // $stmt1->bindParam(":lastname", $lname);
+                    // $stmt1->bindParam(":suffix", $suffix);
+                    // $stmt1->bindParam(":id", $docId);
 
-                    $stmt2->bindParam(":firstname", $fname);
-                    $stmt2->bindParam(":lastname", $lname);
-                    $stmt2->bindParam(":suffix", $suffix);
-                    $stmt2->bindParam(":docId", $docId);
+                    // $stmt2->bindParam(":firstname", $fname);
+                    // $stmt2->bindParam(":lastname", $lname);
+                    // $stmt2->bindParam(":suffix", $suffix);
+                    // $stmt2->bindParam(":docId", $docId);
 
-                    $stmt1->execute();
-                    $stmt2->execute();
+                    $stmt1->execute([$fname, $lname, $suffix, $docId]);
+                    $stmt2->execute([$fname, $lname, $suffix, $docId]);
                 }
             } catch (PDOException $e) {
                 errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());

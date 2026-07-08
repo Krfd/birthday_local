@@ -105,17 +105,6 @@ $(document).ready(function () {
               allowOutsideClick: false,
             });
             break;
-          // SAFETY NET
-          // case "":
-          //   Swal.fire({
-          //     icon: "online",
-          //     title: "",
-          //     text: "Please verify the details and try again.",
-          //     confirmButtonText: "OKAY",
-          //     confirmButtonColor: "#d33",
-          //     allowOutsideClick: false,
-          //   });
-          //     break;
           default:
             Swal.fire({
               icon: "error",

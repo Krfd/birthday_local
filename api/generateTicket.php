@@ -170,7 +170,8 @@ try {
 
         $updated = 0;
 
-        $validation_proc = $conn->prepare("EXEC CustomerValidation1 @mLName_ = ?, @mFName_ = ?, @mSuffix_ = ?, @mMDN_ = ?, @mBranch_ = ?");
+        // $validation_proc = $conn->prepare("EXEC CustomerValidation1 @mLName_ = ?, @mFName_ = ?, @mSuffix_ = ?, @mMDN_ = ?, @mBranch_ = ?");
+        $validation_proc = $conn->prepare("EXEC CustomerValidation1 ?,?,?,?,?");
 
         $name_variants = generate_name_variants($first_name);
         $last_variants = generate_name_variants($last_name);
