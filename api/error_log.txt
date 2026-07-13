@@ -1,2 +1,11 @@
-[2026-07-08 17:20:01] Error: [2] SQLSTATE[42000]: [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot find either column "dbo" or the user-defined function or aggregate "dbo.fn_OnlyNumbersToBigInt", or the name is ambiguous. in C:\xampp\htdocs\anniversaya\api\generateTicket.php on line 186
-[2026-07-08 17:20:03] Error: [2] SQLSTATE[07002]: [Microsoft][ODBC Driver 18 for SQL Server]COUNT field incorrect or syntax error in C:\xampp\htdocs\anniversaya\api\responses.php on line 218
+[2026-07-10 16:39:33] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [64].  in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 16:39:33] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [53].  in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 18:59:26] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An established connection was aborted by the software in your host machine.
+ in C:\xampp\htdocs\raffle\api\showWinners.php on line 15
+[2026-07-10 18:59:44] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 18:59:44] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 18:59:44] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An existing connection was forcibly closed by the remote host.
+ in C:\xampp\htdocs\raffle\api\showWinners.php on line 15
+[2026-07-10 18:59:45] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 18:59:45] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\connection.php on line 22
+[2026-07-10 18:59:47] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\connection.php on line 22

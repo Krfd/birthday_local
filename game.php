@@ -256,7 +256,7 @@
           }
         })
         .catch((err) => console.error("Polling error:", err));
-    }, 3000);
+    }, 2000);
 
     fetch("api/getEntries.php")
       .then((res) => res.json())
@@ -333,6 +333,15 @@
         isRolling = false;
         hasStarted = false;
         finalInvoice = "";
+
+        console.log(`DONE: `)
+        console.log({
+          status,
+          currentRegion,
+          currentCategory,
+          currentPrize
+        });
+        console.log(``)
 
         fetch("./sync.php", {
           method: "POST",
@@ -448,9 +457,18 @@
         // rollSingleDigit(currentDigitIndex);
         rollSingleDigit(order[0]);
       }
-      console.log(`UPDATED RANDOMIZER`)
+      // console.log(`UPDATED RANDOMIZER`)
 
       rollNextDigit();
+
+      console.log(`ROLLING: `)
+      console.log({
+        status,
+        currentRegion,
+        currentCategory,
+        currentPrize
+      });
+      console.log(``)
 
       fetch("./sync.php", {
         method: "POST",
@@ -579,6 +597,14 @@
           finalInvoice = "";
 
           excludedCustomerNames.add(winnerName);
+
+          console.log(`TO BE EXCLUDED: `)
+          console.log({
+            status,
+            currentRegion,
+            currentCategory,
+            currentPrize
+        });
 
           // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
           fetch("./sync.php", {

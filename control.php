@@ -41,6 +41,30 @@
       border-collapse: separate;
       border-spacing: 0 3px;
     }
+
+    #winnerTable {
+    border-collapse: separate;
+    border-spacing: 0 10px; /* gap between rows */
+  }
+
+  #winnerTable tbody td {
+      background: #fff;
+  }
+
+  #winnerTable thead tr th:first-child {
+      border-radius: 100px 0 0 100px;
+  }
+  #winnerTable thead tr th:last-child {
+      border-radius: 0 100px 100px 0;
+  }
+
+  #winnerTable tbody td:first-child {
+      border-radius: 100px 0 0 100px;
+  }
+
+  #winnerTable tbody td:last-child {
+      border-radius: 0 100px 100px 0;
+  }
   </style>
 </head>
 
@@ -110,11 +134,7 @@
       </div>
     </div>
   </div>
-  <!-- <div class="container">
-    <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
-  </div> -->
   <div class="container">
-    <!-- <div class="mt-3"> -->
     <div class="d-flex justify-content-center align-items-center gap-3">
       <button id="start-btn" class="btn btn-primary px-5 fs-4 rounded-5">
         START
@@ -131,24 +151,24 @@
           </div>
           <div id="winnerTable_filter" class="dataTables_filter"></div>
         </div>
-        <div class="table-responsive">
-          <table
-            class="table datatables table-hover mt-3 text-center table-light table-striped"
-            id="winnerTable">
-            <thead class="border">
-              <tr>
-                <th>#</th>
-                <th>E-Ticket</th>
-                <th>CUSTOMER</th>
-                <th>AREA</th>
-                <th>CATEGORY</th>
-                <th>PRIZE</th>
-                <th>TIMESTAMP</th>
-              </tr>
-            </thead>
-            <tbody id="winnerTableBody"></tbody>
-          </table>
-        </div>
+          <div class="table-responsive">
+            <table
+              class="table datatables table-hover mt-3 text-center table-light table-striped"
+              id="winnerTable">
+              <thead class="border">
+                <tr>
+                  <th>#</th>
+                  <th>E-Ticket</th>
+                  <th>CUSTOMER</th>
+                  <th>AREA</th>
+                  <th>CATEGORY</th>
+                  <th>PRIZE</th>
+                  <th>TIMESTAMP</th>
+                </tr>
+              </thead>
+              <tbody id="winnerTableBody"></tbody>
+            </table>
+          </div>
       </div>
     </div>
   </div>
@@ -163,6 +183,7 @@
     const prize = document.getElementById('prize');
     const startBtn = document.getElementById('start-btn');
     let raffleRunning = false;
+    let currentPrize = document.getElementById("currentPrize")
     let maxPrize = document.getElementById("maxPrize")
     let counterContainer = document.getElementById("counterContainer")
 
@@ -180,7 +201,6 @@
       }
 
       if (loc) {
-        // try {
         const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`, );
         const categories = await res.json();
 
@@ -190,10 +210,6 @@
           option.textContent = cat;
           category.appendChild(option);
         });
-        // } catch (err) {
-        //   if (err.name !== "AbortError")
-        //     console.error(err);
-        // }
       }
     }
 
@@ -205,12 +221,7 @@
       console.log(`FETCHING PRIZE FOR LOCATION: ${loc}, CATEGORY: ${cat}`);
 
       if (loc && cat) {
-        // try {
-        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`,
-          // {
-          //   signal: prizeController.signal
-          // }
-        );
+        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`);
         const data = await res.json();
 
         if (data && data.product) {
@@ -218,19 +229,13 @@
           counterContainer.classList.add("d-block")
           prize.value = `${data.product} - ${data.brand} (${data.model})`;
           maxPrize.textContent = `${data.maxWinner}`
+          currentPrize.textContent = `${data.currentCounter}`
+
+          console.log(`CURRENT COUNTER : ${data.currentCounter}`)
           console.log(`MAX WINNER : ${data.maxWinner}`)
         }
-        // else {
-        //   prize.value = '';
-        // }
-        // } else {
-        //   prize.value = '';
       }
       checkInputs();
-      // } catch (err) {
-      //   if (err.name !== "AbortError")
-      //     console.error(err);
-      // }
     }
 
     function checkInputs() {
@@ -261,10 +266,15 @@
     const winnerTable = new DataTable("#winnerTable", {
       pageLength: 8,
       lengthChange: false,
-      columnDefs: [{
+      columnDefs: [
+        {
           targets: "_all",
-          className: "text-center"
+          className: "align-middle text-center"
         },
+        // {
+        //     targets: 0,
+        //     visible: false // hide ID column
+        // },
         {
           targets: 5, // Prize column
           width: "300px",
@@ -276,26 +286,11 @@
       ],
     });
 
-    // const startButton = document.getElementById("start-btn");
     const winnerTableBody = document.getElementById("winnerTableBody");
 
     let lastWinnerId = 0;
     let winnerInterval = null;
 
-    // startButton.addEventListener("click", () => {
-    //   fetch("sync.php", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json"
-    //     },
-    //     body: JSON.stringify({
-    //       status: "rolling"
-    //     }),
-    //   });
-    //   startButton.disabled = true;
-    // });
-
-    // Load all winners and update UI
     function loadWinners() {
       fetch("api/showWinners.php")
         .then((res) => res.json())
@@ -331,20 +326,103 @@
       });
     }
 
-    function renderWinners(winners) {
-      const formattedWinners = winners.map((winner) => [
-        winner.id,
-        winner.winningTicket,
-        winner.winner,
-        winner.area,
-        winner.category,
-        winner.prize,
-        formatTime(winner.dateWon),
-      ]);
+    // ORIGINAL
+    // function renderWinners(winners) {
+    //   const formattedWinners = winners.map((winner) => [
+    //     winner.id,
+    //     winner.winningTicket,
+    //     winner.winner,
+    //     winner.area,
+    //     winner.category,
+    //     winner.prize,
+    //     formatTime(winner.dateWon),
+    //   ]);
 
-      winnerTable.clear(); // Clears all rows
-      winnerTable.rows.add(formattedWinners); // Adds new rows
-      winnerTable.draw(); // Re-renders the table
+    //   winnerTable.clear(); // Clears all rows
+    //   winnerTable.rows.add(formattedWinners); // Adds new rows
+    //   winnerTable.draw(); // Re-renders the table
+    // }
+
+    // CURRENTLY WORKING
+    // function renderWinners(winners) {
+    //   const tbody = document.getElementById("winnerTableBody");
+    //   tbody.innerHTML = "";
+    //   // winnerTable.clear()
+
+    //   console.log(`UPDATED SCRIPT`)
+
+    //   let counter = 1;
+
+    //   winners.forEach((winner) => {
+
+    //     let categoryBg = "bg-primary";
+    //     let categoryText = "text-light"
+    //     if (winner.category === "Consolation") {
+    //       categoryBg = "bg-info"
+    //     } else if (winner.category === "Grand Prize") {
+    //       categoryBg = "bg-warning"
+    //       categoryText = "text-dark"
+    //     }
+
+    //     const row = `
+    //       <tr data-id="${winner.id}">
+    //         <td class="align-middle text-center"><span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary" style="width: 40px; max-width: 40px">${counter++}</span></td>
+    //         <td class="align-middle text-center">
+    //           <span class="fw-bold text-primary">${winner.winningTicket}</span>
+    //         </td>
+    //         <td class="align-middle text-center fw-bold">${winner.winner}</td>
+    //         <td class="align-middle text-center">${winner.area}</td>
+    //         <td class="align-middle text-center">
+    //           <span class="badge ${categoryBg} ${categoryText}">
+    //             ${winner.category}
+    //           </span>
+    //         </td>
+    //         <td class="align-middle text-center">
+    //           <span class="badge bg-success">
+    //             ${winner.prize}
+    //           </span>
+    //         </td>
+    //         <td class="align-middle text-center">${formatTime(winner.dateWon)}</td>
+    //       </tr>
+    //     `;
+
+    //     tbody.insertAdjacentHTML("beforeend", row);
+    //   });
+    // }
+
+    function renderWinners(winners) {
+      winnerTable.clear();
+
+      let counter = 1;
+
+      winners.reverse();
+
+      winners.forEach((winner) => {
+        let categoryBg = "bg-primary";
+        let categoryText = "text-light";
+
+        if (winner.category === "Consolation") {
+          categoryBg = "bg-info";
+        } else if (winner.category === "Grand Prize") {
+          categoryBg = "bg-warning";
+          categoryText = "text-dark";
+        }
+
+        winnerTable.row.add([
+          //  winner.id,
+          `<span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary text-center" style="width:40px;max-width:40px;">${counter++}</span>`,
+          `<span class="fw-bold text-primary text-center">${winner.winningTicket}</span>`,
+          `<span class="fw-bold text-center">${winner.winner}</span>`,
+          `<span class="text-center">${winner.area}</span>`,
+          `<span class="badge ${categoryBg} ${categoryText}">${winner.category}</span>`,
+          `<span class="badge bg-success">${winner.prize}</span>
+          `,
+
+          formatTime(winner.dateWon)
+        ]);
+      });
+
+      winnerTable.draw(false);
     }
 
     // Load initial winners once
@@ -357,8 +435,6 @@
         }
       });
 
-    // START button triggers polling
-    // startButton.addEventListener("click", () => {
     startBtn.addEventListener("click", () => {
 
       raffleRunning = true;
@@ -383,7 +459,6 @@
         body: JSON.stringify(payload),
       });
 
-      // Start polling for new winner
       if (winnerInterval) clearInterval(winnerInterval);
       winnerInterval = setInterval(loadWinners, 2000);
     });
