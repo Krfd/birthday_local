@@ -252,7 +252,7 @@
           }
         })
         .catch((err) => console.error("Polling error:", err));
-    }, 3000);
+    }, 2000);
 
     fetch("api/getEntries.php")
       .then((res) => res.json())
@@ -328,6 +328,15 @@
         isRolling = false;
         hasStarted = false;
         finalInvoice = "";
+
+        console.log(`DONE: `)
+        console.log({
+          status,
+          currentRegion,
+          currentCategory,
+          currentPrize
+        });
+        console.log(``)
 
         fetch("./sync.php", {
           method: "POST",
@@ -432,7 +441,33 @@
 
         rollSingleDigit(order[0]);
       }
+<<<<<<< HEAD
       rollNextDigit();
+=======
+      // console.log(`UPDATED RANDOMIZER`)
+
+      rollNextDigit();
+
+      console.log(`ROLLING: `)
+      console.log({
+        status,
+        currentRegion,
+        currentCategory,
+        currentPrize
+      });
+      console.log(``)
+
+      fetch("./sync.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "rolling",
+          finalInvoice,
+        }),
+      });
+>>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
     }
 
     function submitWinnerDetails(winnerName, winnerTicket) {
@@ -551,6 +586,7 @@
 
           excludedCustomerNames.add(winnerName);
 
+<<<<<<< HEAD
           // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA 
           console.log(
             "POST", {
@@ -561,6 +597,17 @@
               prize: currentPrize
             }
           );
+=======
+          console.log(`TO BE EXCLUDED: `)
+          console.log({
+            status,
+            currentRegion,
+            currentCategory,
+            currentPrize
+        });
+
+          // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
+>>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
           fetch("./sync.php", {
             method: "POST",
             headers: {
