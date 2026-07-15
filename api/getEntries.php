@@ -3,14 +3,14 @@
 include("../config/connection.php");
 
 try {
-    // $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number FROM current_entries WHERE Excluded = 0");
+    // $stmt = $conn->prepare("SELECT TOP (2) First_Name, Last_Name, Ticket_Number
     $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number
     FROM current_entries ce
         WHERE ce.Excluded = 0
         AND NOT EXISTS (
             SELECT 1
             FROM winners w
-            WHERE w.winningTicket = ce.Ticket_Number
+            WHERE w.winner = ce.First_Name + ' ' + ce.Last_Name
         )
     ");
     $stmt->execute();
@@ -36,7 +36,6 @@ try {
         ];
     }
 
-    // Return JSON response
     echo json_encode($result);
 } catch (Exception $e) {
     http_response_code(500);

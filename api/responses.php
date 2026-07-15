@@ -15,7 +15,6 @@ set_error_handler("errorHandler");
 
 date_default_timezone_set('Asia/Manila');
 
-// DB connection
 $servername = "192.168.101.68";
 $db = "ANNIVERSAYA";
 $username = "sa";

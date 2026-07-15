@@ -13,7 +13,9 @@
   <link rel="stylesheet" href="css/control.css" />
   <style>
     body {
-      background: #c2ddff;
+      background:
+        linear-gradient(rgba(180, 30, 30, 0.45), rgba(180, 30, 30, 0.45)),
+        url("assets/img/newbg.jpg") no-repeat center center / cover;
     }
 
     #winnerTable,
@@ -25,21 +27,55 @@
     /* Add spacing between rows */
     #winnerTable tbody tr {
       border-bottom: 20px solid transparent;
-      /* gap between rows */
     }
 
-    /* Optional: give rows a subtle background */
     #winnerTable tbody tr {
       background-color: #f8f9fa;
-      /* light gray */
       border-radius: 10px;
-      /* rounded corners if using display: block */
     }
 
-    /* Optional: spacing can look better when table layout is adjusted */
     #winnerTable {
       border-collapse: separate;
       border-spacing: 0 3px;
+    }
+
+    #winnerTable {
+      border-collapse: separate;
+      border-spacing: 0 10px;
+    }
+
+    #winnerTable tbody td {
+      background: #fff;
+    }
+
+    #winnerTable thead tr th:first-child {
+      border-radius: 100px 0 0 100px;
+    }
+
+    #winnerTable thead tr th:last-child {
+      border-radius: 0 100px 100px 0;
+    }
+
+    #winnerTable tbody td:first-child {
+      border-radius: 100px 0 0 100px;
+    }
+
+    #winnerTable tbody td:last-child {
+      border-radius: 0 100px 100px 0;
+    }
+
+    .overall-progress::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .overall-progress::-webkit-scrollbar-track {
+      background: #cecece;
+      border-radius: 50px;
+    }
+
+    .overall-progress::-webkit-scrollbar-thumb {
+      background: #33a1f1;
+      border-radius: 50px;
     }
   </style>
 </head>
@@ -76,10 +112,10 @@
   <button id="logout-btn" style="height: 50px; width: 50px" class="btn border border-danger bg-danger-subtle btn-sm position-absolute rounded-5 top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
     <i class="bi bi-box-arrow-left d-flex justify-content-center align-items-center text-danger"></i>
   </button>
-  <div class="container">
-    <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
+  <div class="container" style="padding-top: 250px">
+    <h2 class="text-center fw-bold text-light">CONTROL PANEL</h2>
   </div>
-  <div class="container mt-3 d-flex justify-content-center mb-5 w-auto p-3 bg-light shadow-sm rounded-2 gap-5">
+  <div class="container d-flex justify-content-center mb-5 w-auto p-4 bg-danger-subtle shadow rounded-3 gap-5">
     <div class="d-flex flex-column gap-1" style="width: 550px">
       <div class="d-flex align-items-center gap-3">
         <label for="location" class="form-label fw-semibold">Location: </label>
@@ -110,30 +146,26 @@
       </div>
     </div>
   </div>
-  <!-- <div class="container">
-    <h2 class="text-center fw-bold text-danger">CONTROL PANEL</h2>
-  </div> -->
   <div class="container">
-    <!-- <div class="mt-3"> -->
     <div class="d-flex justify-content-center align-items-center gap-3">
-      <button id="start-btn" class="btn btn-primary px-5 fs-4 rounded-5">
+      <button id="start-btn" class="btn btn-danger px-5 fs-4 rounded-5">
         START
       </button>
     </div>
     <div class="mt-5">
-      <h1 class="fw-bold text-success">WINNING BOARD</h1>
+      <h1 class="fw-bold text-light">WINNING BOARD</h1>
       <div class="table-responsive">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
           <div>
-            <button id="downloadCSV" class="btn btn-success px-4 fs-5 rounded-4">
+            <button id="downloadCSV" class="btn btn-danger px-4 fs-5 rounded-4">
               Download CSV
             </button>
           </div>
           <div id="winnerTable_filter" class="dataTables_filter"></div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive overall-progress p-3 text-light" style="max-height: 450px">
           <table
-            class="table datatables table-hover mt-3 text-center table-light table-striped"
+            class="table datatables table-hover mt-3 text-center table-light table-striped overall-progress"
             id="winnerTable">
             <thead class="border">
               <tr>
@@ -156,15 +188,18 @@
   <script src="js/jquery-3.7.1.min.js"></script>
   <script src="js/datatables/dataTables.js"></script>
   <script src="js/bootstrap.bundle.min.js"></script>
-
   <script>
     const region = document.getElementById('region');
     const category = document.getElementById('category');
     const prize = document.getElementById('prize');
     const startBtn = document.getElementById('start-btn');
     let raffleRunning = false;
+    let currentPrize = document.getElementById("currentPrize")
     let maxPrize = document.getElementById("maxPrize")
     let counterContainer = document.getElementById("counterContainer")
+    let payloadCounter = 0;
+    let successfulPayloads = 0;
+    let failedPayloads = 0;
 
     async function fetchCategories() {
       const loc = region.value;
@@ -172,15 +207,12 @@
       prize.value = '';
       checkInputs();
 
-      console.log(`LOCATION VALUE: ${loc}`)
-
       if (loc || loc === '') {
         counterContainer.classList.remove("d-block")
         counterContainer.classList.add("d-none")
       }
 
       if (loc) {
-        // try {
         const res = await fetch(`api/get_categories.php?location=${encodeURIComponent(loc)}`, );
         const categories = await res.json();
 
@@ -190,10 +222,6 @@
           option.textContent = cat;
           category.appendChild(option);
         });
-        // } catch (err) {
-        //   if (err.name !== "AbortError")
-        //     console.error(err);
-        // }
       }
     }
 
@@ -202,15 +230,8 @@
       const cat = category.value;
       startBtn.disabled = true
 
-      console.log(`FETCHING PRIZE FOR LOCATION: ${loc}, CATEGORY: ${cat}`);
-
       if (loc && cat) {
-        // try {
-        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`,
-          // {
-          //   signal: prizeController.signal
-          // }
-        );
+        const res = await fetch(`api/get_prize.php?location=${encodeURIComponent(loc)}&category=${encodeURIComponent(cat)}`);
         const data = await res.json();
 
         if (data && data.product) {
@@ -218,29 +239,23 @@
           counterContainer.classList.add("d-block")
           prize.value = `${data.product} - ${data.brand} (${data.model})`;
           maxPrize.textContent = `${data.maxWinner}`
-          console.log(`MAX WINNER : ${data.maxWinner}`)
+          currentPrize.textContent = `${data.currentCounter}`
+
+          const maxWinner = Number(maxPrize.textContent);
+          const currentCounter = Number(currentPrize.textContent);
+
+          if (currentCounter === maxWinner) {
+            startBtn.disabled = true
+            return
+          } else {
+            startBtn.disabled = false
+          }
         }
-        // else {
-        //   prize.value = '';
-        // }
-        // } else {
-        //   prize.value = '';
       }
       checkInputs();
-      // } catch (err) {
-      //   if (err.name !== "AbortError")
-      //     console.error(err);
-      // }
     }
 
     function checkInputs() {
-      // const isValid = region.value && category.value && prize.value.trim();
-      // startBtn.disabled = !isValid;
-      // ORIGINAL
-      // startBtn.disabled = !region.value ||
-      //   !category.value ||
-      //   !prize.value.trim();
-
 
       const isValid =
         region.value &&
@@ -263,10 +278,10 @@
       lengthChange: false,
       columnDefs: [{
           targets: "_all",
-          className: "text-center"
+          className: "align-middle text-center"
         },
         {
-          targets: 5, // Prize column
+          targets: 5,
           width: "300px",
           className: "text-start"
         }
@@ -276,26 +291,11 @@
       ],
     });
 
-    // const startButton = document.getElementById("start-btn");
     const winnerTableBody = document.getElementById("winnerTableBody");
 
     let lastWinnerId = 0;
     let winnerInterval = null;
 
-    // startButton.addEventListener("click", () => {
-    //   fetch("sync.php", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json"
-    //     },
-    //     body: JSON.stringify({
-    //       status: "rolling"
-    //     }),
-    //   });
-    //   startButton.disabled = true;
-    // });
-
-    // Load all winners and update UI
     function loadWinners() {
       fetch("api/showWinners.php")
         .then((res) => res.json())
@@ -303,17 +303,14 @@
           if (data.status === "success" && data.winners.length > 0) {
             const winners = data.winners;
 
-            // Update lastWinnerId if needed
             const newestId = parseInt(winners[0].id);
             if (newestId > lastWinnerId) {
               lastWinnerId = newestId;
               renderWinners(winners);
-              // startButton.disabled = false;
               raffleRunning = false;
               checkInputs();
               fetchPrize()
 
-              // Stop polling after new winner is found
               if (winnerInterval) clearInterval(winnerInterval);
             }
           }
@@ -332,22 +329,39 @@
     }
 
     function renderWinners(winners) {
-      const formattedWinners = winners.map((winner) => [
-        winner.id,
-        winner.winningTicket,
-        winner.winner,
-        winner.area,
-        winner.category,
-        winner.prize,
-        formatTime(winner.dateWon),
-      ]);
+      winnerTable.clear();
 
-      winnerTable.clear(); // Clears all rows
-      winnerTable.rows.add(formattedWinners); // Adds new rows
-      winnerTable.draw(); // Re-renders the table
+      let counter = 1;
+
+      winners.reverse();
+
+      winners.forEach((winner) => {
+        let categoryBg = "bg-primary";
+        let categoryText = "text-light";
+
+        if (winner.category === "Consolation") {
+          categoryBg = "bg-info";
+        } else if (winner.category === "Grand Prize") {
+          categoryBg = "bg-warning";
+          categoryText = "text-dark";
+        }
+
+        winnerTable.row.add([
+          `<span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary text-center" style="width:40px;max-width:40px;">${counter++}</span>`,
+          `<span class="fw-bold text-primary text-center">${winner.winningTicket}</span>`,
+          `<span class="fw-bold text-center">${winner.winner}</span>`,
+          `<span class="text-center">${winner.area}</span>`,
+          `<span class="badge ${categoryBg} ${categoryText}">${winner.category}</span>`,
+          `<span class="badge bg-success">${winner.prize}</span>
+          `,
+
+          formatTime(winner.dateWon)
+        ]);
+      });
+
+      winnerTable.draw(false);
     }
 
-    // Load initial winners once
     fetch("api/showWinners.php")
       .then((res) => res.json())
       .then((data) => {
@@ -357,9 +371,8 @@
         }
       });
 
-    // START button triggers polling
-    // startButton.addEventListener("click", () => {
-    startBtn.addEventListener("click", () => {
+    startBtn.addEventListener("click", async () => {
+      console.log("CLICK", new Date().toISOString());
 
       raffleRunning = true;
       checkInputs();
@@ -368,22 +381,49 @@
       const selectedCategory = category.value;
       const selectedPrize = prize.value;
 
+      payloadCounter++
+
       const payload = {
+        requestNo: payloadCounter,
         status: "rolling",
         region: selectedRegion,
         category: selectedCategory,
         prize: selectedPrize
       }
-      console.log("Payload:", payload);
-      fetch("sync.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-      });
+      console.log(`Sending payload #${payloadCounter}`, payload);
 
-      // Start polling for new winner
+      try {
+        const response = await fetch("sync.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        successfulPayloads++;
+
+        console.log(
+          `✅ Payload #${payload.requestNo} sent successfully`,
+          `Success: ${successfulPayloads}`,
+          `Failed: ${failedPayloads}`
+        );
+
+      } catch (err) {
+        failedPayloads++;
+
+        console.error(
+          `❌ Payload #${payload.requestNo} failed`,
+          err,
+          `Success: ${successfulPayloads}`,
+          `Failed: ${failedPayloads}`
+        );
+      }
+
       if (winnerInterval) clearInterval(winnerInterval);
       winnerInterval = setInterval(loadWinners, 2000);
     });

@@ -1,18 +1,18 @@
 <?php
 
-if (php_sapi_name() !== 'cli') {
-    $authorized_users = ['karlalooo' => 'iap', 'merruel' => 'iap', 'jummie' => 'iap'];
-    $user_ = $_SERVER['PHP_AUTH_USER'] ?? '';
-    $pass_ = $_SERVER['PHP_AUTH_PW'] ?? '';
+// if (php_sapi_name() !== 'cli') {
+//     $authorized_users = ['karlalooo' => 'iap', 'merruel' => 'iap', 'jummie' => 'iap'];
+//     $user_ = $_SERVER['PHP_AUTH_USER'] ?? '';
+//     $pass_ = $_SERVER['PHP_AUTH_PW'] ?? '';
 
-    if (!isset($authorized_users[$user_]) || $authorized_users[$user_] !== $pass_) {
-        $realm = 'Developer Toggle ' . time();
-        header('WWW-Authenticate: Basic realm="' . $realm . '"');
-        header('HTTP/1.0 401 Unauthorized');
-        echo 'ASA 😝';
-        exit;
-    }
-}
+//     if (!isset($authorized_users[$user_]) || $authorized_users[$user_] !== $pass_) {
+//         $realm = 'Developer Toggle ' . time();
+//         header('WWW-Authenticate: Basic realm="' . $realm . '"');
+//         header('HTTP/1.0 401 Unauthorized');
+//         echo 'ASA 😝';
+//         exit;
+//     }
+// }
 
 file_put_contents("log.txt", date("Y-m-d H:i:s") . " - Script started\n", FILE_APPEND);
 

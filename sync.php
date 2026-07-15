@@ -6,6 +6,13 @@ $stateFile = 'raffle_state.json';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = file_get_contents('php://input');
+
+    file_put_contents(
+        "payload.log",
+        date("Y-m-d H:i:s") . " " . file_get_contents("php://input") . PHP_EOL,
+        FILE_APPEND
+    );
+
     $decoded = json_decode($data, true);
 
     $existing = file_exists($stateFile)
@@ -17,9 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "excludedCustomerNames" => [],
         ];
 
-    if (isset($decoded['region'])) {
+    if (isset($decoded['requestNo'])) {
+        $existing['requestNo'] = $decoded['requestNo'];
+    }
+
+    if (array_key_exists('region', $decoded) && $decoded['region'] !== '') {
         $existing['region'] = $decoded['region'];
     }
+
+    if (array_key_exists('category', $decoded) && $decoded['category'] !== '') {
+        $existing['category'] = $decoded['category'];
+    }
+
+    if (array_key_exists('prize', $decoded) && $decoded['prize'] !== '') {
+        $existing['prize'] = $decoded['prize'];
+    }
+
     if (isset($decoded['category'])) {
         $existing['category'] = $decoded['category'];
     }

@@ -17,7 +17,7 @@
     }
 
     body {
-      background: url("assets/img/background.jpg") no-repeat center center / cover;
+      background: url("assets/img/newbg.jpg") no-repeat center center / cover;
       text-align: center;
       justify-content: center;
       align-items: center;
@@ -27,22 +27,22 @@
     }
 
     @font-face {
-      font-family: 'Martellas';
-      src: url('./fonts/martellas.ttf') format('truetype');
+      font-family: 'Poppins';
+      src: url('./fonts/Poppins-Black.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
     }
 
     #winner-display {
       margin-top: 50px;
-      font-size: 4em;
+      font-size: 5em;
       min-height: 50px;
       color: #ffff;
     }
 
     #invoice-display {
       font-size: 4em;
-      color: #333;
+      color: #960a03;
     }
 
     .digit.roll {
@@ -51,7 +51,7 @@
 
     .digit.rolling {
       animation: rollBounce 0.2s ease-out;
-      border: 5px solid #4f2b0e !important;
+      border: 5px solid #960a03 !important;
     }
 
     .digit:hover {
@@ -82,7 +82,7 @@
 
     .digit.locked {
       animation: bounceIn 0.4s ease;
-      border: 5px solid #ffce00 !important;
+      border: 5px solid #960a03 !important;
     }
 
     @keyframes bounceIn {
@@ -119,13 +119,10 @@
       font-weight: bold;
       text-align: center;
       transition: all 0.2s ease;
-      border: 5px solid #4f2b0e !important;
-
-      /* NEW: these lines fix the animation alignment */
+      border: 5px solid #960a03 !important;
       position: relative;
       overflow: hidden;
       line-height: 100px;
-      /* match height to center text vertically */
     }
 
 
@@ -135,8 +132,8 @@
 
     .font {
       position: relative;
-      color: #ffce00;
-      font-family: 'Martellas', sans-serif;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
       letter-spacing: 10px;
       display: inline-block;
       text-align: center;
@@ -146,7 +143,7 @@
     .winnerFont {
       position: relative;
       color: #fff !important;
-      font-family: 'Martellas', sans-serif;
+      font-family: 'Poppins', sans-serif;
       letter-spacing: 10px;
       display: inline-block;
       text-align: center;
@@ -160,8 +157,8 @@
       left: 50%;
       transform: translateX(-50%);
       color: transparent;
-      -webkit-text-stroke: 20px #4f2b0e;
-      text-stroke: 20px #4f2b0e;
+      -webkit-text-stroke: 20px #960a03;
+      text-stroke: 20px #960a03;
       z-index: -1;
       pointer-events: none;
       white-space: nowrap;
@@ -174,8 +171,8 @@
       left: 50%;
       transform: translateX(-50%);
       color: transparent;
-      -webkit-text-stroke: 20px #4f2b0e;
-      text-stroke: 20px #4f2b0e;
+      -webkit-text-stroke: 20px #960a03;
+      text-stroke: 20px #960a03;
       z-index: -1;
       pointer-events: none;
       white-space: nowrap;
@@ -190,12 +187,12 @@
         <h2 class="pt-5" style="font-size: clamp(1.5rem, 5vw, 5rem); text-align: center;">
           <span class="fw-bold font" data-text="E-TICKET NUMBER">E-TICKET NUMBER</span>
         </h2>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #4f2b0e">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
       </div>
     </div>
     <div class="mt-5">
@@ -203,7 +200,6 @@
         <span class="fw-bold font" data-text="WINNER">WINNER</span>
       </h2>
       <div id="winner-display" class="font" aria-live="assertive">
-        <!-- <span id="winner-label"></span> -->
         <span id="winner-name"></span>
       </div>
     </div>
@@ -261,7 +257,6 @@
     fetch("api/getEntries.php")
       .then((res) => res.json())
       .then((data) => {
-        // ✅ Rehydrate excluded customer names
         if (data.excludedCustomerNames) {
           excludedCustomerNames = new Set(data.excludedCustomerNames);
         }
@@ -395,10 +390,6 @@
         const perDigitDuration = totalDuration / digitCount;
         const intervalDelay = perDigitDuration / totalRolls;
 
-        // let currentDigitIndex = digitCount - 1; // Start from last digit
-
-        // Create a random order of digit indices
-
         const order = [...Array(digitCount).keys()];
 
         for (let i = order.length - 1; i > 0; i--) {
@@ -429,12 +420,6 @@
               digits[index].offsetWidth;
               digits[index].classList.add("locked");
 
-              // currentDigitIndex--;
-              // if (currentDigitIndex >= 0) {
-              //   setTimeout(() => rollSingleDigit(currentDigitIndex), 0);
-              // } else {
-              //   showWinner();
-              // }
               orderIndex++;
               if (orderIndex < order.length) {
                 setTimeout(() => rollSingleDigit(order[orderIndex]), 0);
@@ -445,23 +430,9 @@
           }, intervalDelay);
         }
 
-        // rollSingleDigit(currentDigitIndex);
         rollSingleDigit(order[0]);
       }
-      console.log(`UPDATED RANDOMIZER`)
-
       rollNextDigit();
-
-      fetch("./sync.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "rolling",
-          finalInvoice,
-        }),
-      });
     }
 
     function submitWinnerDetails(winnerName, winnerTicket) {
@@ -544,9 +515,9 @@
       const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
       const end = Date.now() + duration;
 
-      const colors = ["#3a8004", "#b39100", "#0a66cc", "#b02e00"];
+      const colors = ["#FFF8DC", "#960a03"];
       const confettiColors =
-        currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC"] :
+        currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] :
         colors;
 
       (function frame() {
@@ -580,7 +551,16 @@
 
           excludedCustomerNames.add(winnerName);
 
-          // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
+          // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA 
+          console.log(
+            "POST", {
+              status,
+              finalInvoice,
+              region: currentRegion,
+              category: currentCategory,
+              prize: currentPrize
+            }
+          );
           fetch("./sync.php", {
             method: "POST",
             headers: {

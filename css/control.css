@@ -1,4 +1,4 @@
-body {
+/* body {
     background: linear-gradient(135deg, #e0eafc, #cfdef3);
     display: flex;
     flex-direction: column;
@@ -7,8 +7,73 @@ body {
     align-items: center;
     height: 100vh;
     font-family: sans-serif;
-}
+} */
 
+ body {
+     background:
+         linear-gradient(rgba(180, 30, 30, 0.45), rgba(180, 30, 30, 0.45)),
+         url("assets/img/newbg.jpg") no-repeat center center / cover;
+ }
+
+ #winnerTable,
+ #winnerTable th,
+ #winnerTable td {
+     border: none !important;
+ }
+
+ #winnerTable tbody tr {
+     border-bottom: 20px solid transparent;
+ }
+
+ /* Optional: give rows a subtle background */
+ #winnerTable tbody tr {
+     background-color: #f8f9fa;
+     border-radius: 10px;
+ }
+
+ #winnerTable {
+     border-collapse: separate;
+     border-spacing: 0 3px;
+ }
+
+ #winnerTable {
+     border-collapse: separate;
+     border-spacing: 0 10px;
+ }
+
+ #winnerTable tbody td {
+     background: #fff;
+ }
+
+ #winnerTable thead tr th:first-child {
+     border-radius: 100px 0 0 100px;
+ }
+
+ #winnerTable thead tr th:last-child {
+     border-radius: 0 100px 100px 0;
+ }
+
+ #winnerTable tbody td:first-child {
+     border-radius: 100px 0 0 100px;
+ }
+
+ #winnerTable tbody td:last-child {
+     border-radius: 0 100px 100px 0;
+ }
+
+ .overall-progress::-webkit-scrollbar {
+     width: 5px;
+ }
+
+ .overall-progress::-webkit-scrollbar-track {
+     background: #cecece;
+     border-radius: 50px;
+ }
+
+ .overall-progress::-webkit-scrollbar-thumb {
+     background: #33a1f1;
+     border-radius: 50px;
+ }
 button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
