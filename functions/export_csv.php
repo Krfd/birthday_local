@@ -92,11 +92,15 @@ try {
     }
 
     // SHOULD USE DOCNUM UPON UPDATING RESPONSES
-    // $updateResponse = $conn->prepare("UPDATE responses SET SMS = 'Y' WHERE Invoice_Number = ? AND Branch_Purchased = ? AND (SMS IS NULL OR SMS != 'Y')");
-    $updateResponse = $conn->prepare("EXEC UpdateExportedResponses ?,?");
+    $updateResponse = $conn->prepare("EXEC UpdateExportedResponses ?,?,?");
+
+    $batchStmt = $conn->query("SELECT ISNULL(MAX(Batch), 0) + 1
+    FROM raffle_entries");
+
+    $batch = $batchStmt->fetchColumn();
 
     foreach ($responsePairs as [$invoice, $branch]) {
-        $updateResponse->execute([$invoice, $branch]);
+        $updateResponse->execute([$invoice, $branch, $batch]);
     }
     exit();
 } catch (PDOException $e) {

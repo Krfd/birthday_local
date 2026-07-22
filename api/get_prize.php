@@ -23,6 +23,8 @@ try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    $conn->beginTransaction();
+
     $location = $_GET['location'] ?? '';
     $category = $_GET['category'] ?? '';
 
@@ -33,8 +35,8 @@ try {
         $stmt->execute([$location, $category]);
         $prize = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // $reset_current_entries = $conn->prepare("TRUNCATE TABLE current_entries");
-        // $reset_current_entries->execute();
+        $reset_current_entries = $conn->prepare("TRUNCATE TABLE current_entries");
+        $reset_current_entries->execute();
 
         $location = strtoupper($location);
 
@@ -44,33 +46,29 @@ try {
 
         $branches = $branch_categories->fetchAll(PDO::FETCH_COLUMN);
 
-        // if (!empty($branches)) {
-        //     // Begin transaction
-        //     $conn->beginTransaction();
+        if (!empty($branches)) {
 
-        //     try {
-        //         // Prepare placeholders for IN clause
-        //         $placeholders = implode(',', array_fill(0, count($branches), '?'));
+            try {
+                $placeholders = implode(',', array_fill(0, count($branches), '?'));
 
-        //         // Insert statement to copy matching entries from raffle_entries to current_entries
-        //         $insertSql = "INSERT INTO current_entries 
-        //         (Ticket_Number, Counter, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Postal_Address, Excluded, Exported)
-        //         SELECT Ticket_Number, Counter, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Postal_Address, Excluded, Exported
-        //         FROM raffle_entries
-        //         WHERE Branch IN ($placeholders)";
+                $insertSql = "INSERT INTO current_entries 
+                (Ticket_Number, Counter, cust_Id, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Postal_Address, Excluded, Exported)
+                SELECT Ticket_Number, Counter, cust_Id, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Postal_Address, Excluded, Exported
+                FROM raffle_entries
+                WHERE Branch IN ($placeholders)";
 
-        //         $insertStmt = $conn->prepare($insertSql);
-        //         $insertStmt->execute($branches);
+                $insertStmt = $conn->prepare($insertSql);
+                $insertStmt->execute($branches);
 
-        //         $conn->commit();
-        //     } catch (PDOException $e) {
-        //         $conn->rollBack();
-        //         errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
-        //     }
-        // }
+                $conn->commit();
+            } catch (PDOException $e) {
+                $conn->rollBack();
+                errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
+            }
+        }
 
-        // $file = 'branches.txt';
-        // file_put_contents($file, implode(PHP_EOL, $branches));
+        $file = 'branches.txt';
+        file_put_contents($file, implode(PHP_EOL, $branches));
 
         echo json_encode($prize ?: []);
     } else {

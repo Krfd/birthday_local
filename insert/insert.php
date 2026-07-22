@@ -1,10 +1,10 @@
 <?php
 
-include("./config/connection.php");
-// $servername = "192.168.101.68";
-// $db = "ANNIVERSAYA";
-// $username = "sa";
-// $password = "SB1Admin";
+// include("./config/connection.php");
+$servername = "192.168.101.68";
+$db = "ANNIVERSAYA";
+$username = "sa";
+$password = "SB1Admin";
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);
@@ -15,8 +15,12 @@ try {
     $insert = $conn->prepare("INSERT INTO users (username, password, dept, region, disabled, isAdmin, created) VALUES ('Karlalooo', :password, '', '', 0, 1, SYSDATETIME())");
     $insert->bindParam(":password", $password);
 
+    // $insert = $conn->prepare("UPDATE users SET password = :password WHERE dept = 'ONLINE'");
+    // $insert->bindParam(":password", $password);
+
     if ($insert->execute()) {
         echo "admin created";
+        // echo "user updated";
         exit();
     }
 } catch (PDOException $e) {

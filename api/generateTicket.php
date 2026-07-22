@@ -113,8 +113,8 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $raffle_stmt = $conn->prepare("INSERT INTO [$raffle_table] 
-        ([Counter], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Exported])
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        ([Counter], [cust_Id], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Exported])
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     // ORIGINAL
     $existing_check = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table] WHERE [Branch] = ? AND [Invoice_Number] = ? AND (([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?) OR ([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?))");
@@ -126,10 +126,8 @@ try {
     // INVALID INVOICES
     $invalid_invoice_stmt = $conn->prepare("INSERT INTO invalid_invoices (docId, Branch, First_Name, Last_Name, Suffix, Invoice_Number, Mobile_Number, Email, Findings, Postal_Address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-
     function overall($overall, $docId, $branch, $first, $last, $suffix, $inv, $mobile, $email, $postal, $findings)
     {
-
         $overall->execute([
             $docId,
             $branch,
@@ -144,10 +142,13 @@ try {
         ]);
     }
 
+    $employee_check_stmt = $conn->prepare("SELECT 1 FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
+
     $ticketed = 0;
 
     foreach ($rows as $row) {
         $docId = $row['id'];
+        $cust_Id = $row['cust_Id'];
         $first_name = trim($row['First_Name'] ?? '');
         $last_name = trim($row['Last_Name'] ?? '');
         $suffix = trim($row['Suffix'] ?? '');
@@ -192,6 +193,53 @@ try {
                         $matched = true;
                         break 3;
                     }
+                    $employee_check_stmt->execute([$first_name, $last_name]);
+                    $is_employee = $employee_check_stmt->fetchColumn();
+
+                    if ($is_employee) {
+                        $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = :id")->execute([$docId]);
+                        continue 3;
+                    } else {
+                        $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
+                        $exists_invalid->execute([$docId]);
+
+                        if (!$exists_invalid->fetchColumn()) {
+                            $invalid_invoice_stmt->execute([
+                                $docId,
+                                $branch_val,
+                                $first_name,
+                                $last_name,
+                                $suffix,
+                                $inv_val,
+                                $mobile_val,
+                                $email_val,
+                                'invoice contain letter or no match in SAP',
+                                $postal_address
+                            ]);
+                        }
+
+                        $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
+                        $exists_overall->execute([$docId]);
+
+                        if (!$exists_overall->fetchColumn()) {
+                            overall(
+                                $overall,
+                                $docId,
+                                $branch_val,
+                                $first_name,
+                                $last_name,
+                                $suffix,
+                                $inv_val,
+                                $mobile_val,
+                                $email_val,
+                                $postal_address,
+                                $finding_type = 'invoice contain letter or no match in SAP'
+                            );
+                        }
+
+                        $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = :id")->execute([$docId]);
+                        continue 3;
+                    }
                 }
             }
         }
@@ -199,6 +247,37 @@ try {
         $valid_match_found = false;
 
         foreach ($results as $validation_result) {
+
+            $total_amt = (float) ($validation_result['TotalAmt'] ?? null);
+            $sap_docnum = $validation_result['DocNum'] ?? null;
+            $doc_date = $validation_result['DocDate'];
+
+            $employee_check_stmt->execute([$first_name, $last_name]);
+            $is_employee = $employee_check_stmt->fetchColumn();
+
+            if ($is_employee) {
+                $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
+                $exists_overall->execute([$docId]);
+                if (!$exists_overall->fetchColumn()) {
+                    overall(
+                        $overall,
+                        $docId,
+                        $branch_val,
+                        $first_name,
+                        $last_name,
+                        $suffix,
+                        $inv_val,
+                        $mobile_val,
+                        $email_val,
+                        $postal_address,
+                        $finding_type = 'employee'
+                    );
+                }
+
+                $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = :id")->execute([$docId]);
+                continue;
+            }
+
             if ($validation_result['LastName'] === 'Y' && $validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'Y') {
                 $existing_check->execute([
                     $branch_val,
@@ -368,6 +447,7 @@ try {
                                     for ($i = 0; $i < $ticket_count; $i++) {
                                         $raffle_stmt->execute([
                                             $ticket_count,
+                                            $cust_Id,
                                             $sap_docnum,
                                             $branch_val,
                                             $first_name,

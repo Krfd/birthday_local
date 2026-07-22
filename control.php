@@ -40,7 +40,6 @@
     }
 
     #winnerTable {
-<<<<<<< HEAD
       border-collapse: separate;
       border-spacing: 0 10px;
     }
@@ -57,12 +56,8 @@
       border-radius: 0 100px 100px 0;
     }
 
-    #winnerTable tbody td:first-child {
-      border-radius: 100px 0 0 100px;
-    }
-
-    #winnerTable tbody td:last-child {
-      border-radius: 0 100px 100px 0;
+    #winnerTable tbody td:first-child:last-child {
+      border-radius: 100px;
     }
 
     .overall-progress::-webkit-scrollbar {
@@ -78,30 +73,6 @@
       background: #33a1f1;
       border-radius: 50px;
     }
-=======
-    border-collapse: separate;
-    border-spacing: 0 10px; /* gap between rows */
-  }
-
-  #winnerTable tbody td {
-      background: #fff;
-  }
-
-  #winnerTable thead tr th:first-child {
-      border-radius: 100px 0 0 100px;
-  }
-  #winnerTable thead tr th:last-child {
-      border-radius: 0 100px 100px 0;
-  }
-
-  #winnerTable tbody td:first-child {
-      border-radius: 100px 0 0 100px;
-  }
-
-  #winnerTable tbody td:last-child {
-      border-radius: 0 100px 100px 0;
-  }
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
   </style>
 </head>
 
@@ -140,9 +111,9 @@
   <div class="container" style="padding-top: 250px">
     <h2 class="text-center fw-bold text-light">CONTROL PANEL</h2>
   </div>
-  <div class="container d-flex justify-content-center mb-5 w-auto p-4 bg-danger-subtle shadow rounded-3 gap-5">
-    <div class="d-flex flex-column gap-1" style="width: 550px">
-      <div class="d-flex align-items-center gap-3">
+  <div class="container d-flex justify-content-center mb-5 w-auto p-4 bg-danger-subtle shadow rounded-3 gap-5 w-50">
+    <div class="d-flex flex-column gap-1 justify-content-start align-items-start col-8 me-auto">
+      <div class="d-flex align-items-center gap-3 col-12">
         <label for="location" class="form-label fw-semibold">Location: </label>
         <select name="region" id="region" class="form-select w-75 ms-auto" required>
           <option value="" selected>Select Region</option>
@@ -151,20 +122,20 @@
           <option value="MINDANAO">Mindanao</option>
         </select>
       </div>
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3 col-12">
         <label for="category" class="form-label fw-semibold">Prize Category: </label>
         <select name="category" id="category" class="form-select w-75 ms-auto" required>
           <option value="" selected>Select Category</option>
         </select>
       </div>
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3 col-12">
         <label for="prize" class="form-label fw-semibold">Prize: </label>
         <input type="text" class="form-control w-75 ms-auto" name="prize" id="prize" readonly>
       </div>
     </div>
-    <div class="d-none" id="counterContainer">
-      <h2 class="fw-bold text-secondary">Maximum Winner</h2>
-      <div class="d-flex justify-content-center align-items-center gap-1">
+    <div class="col">
+      <h2 class="fw-bold text-secondary text-center">Maximum Winner</h2>
+      <div class="d-flex justify-content-center align-items-center gap-1 d-none" id="counterContainer">
         <h2 class="fw-bold text-success display-2" id="currentPrize">0</h2>
         <div class="display-3">/</div>
         <h4 class="fw-semibold text-danger display-5" id="maxPrize">3</h4>
@@ -178,7 +149,7 @@
       </button>
     </div>
     <div class="mt-5">
-      <h1 class="fw-bold text-light">WINNING BOARD</h1>
+      <h1 class="fw-bold text-light text-center">WINNING BOARD</h1>
       <div class="table-responsive">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
           <div>
@@ -188,7 +159,6 @@
           </div>
           <div id="winnerTable_filter" class="dataTables_filter"></div>
         </div>
-<<<<<<< HEAD
         <div class="table-responsive overall-progress p-3 text-light" style="max-height: 450px">
           <table
             class="table datatables table-hover mt-3 text-center table-light table-striped overall-progress"
@@ -207,26 +177,6 @@
             <tbody id="winnerTableBody"></tbody>
           </table>
         </div>
-=======
-          <div class="table-responsive">
-            <table
-              class="table datatables table-hover mt-3 text-center table-light table-striped"
-              id="winnerTable">
-              <thead class="border">
-                <tr>
-                  <th>#</th>
-                  <th>E-Ticket</th>
-                  <th>CUSTOMER</th>
-                  <th>AREA</th>
-                  <th>CATEGORY</th>
-                  <th>PRIZE</th>
-                  <th>TIMESTAMP</th>
-                </tr>
-              </thead>
-              <tbody id="winnerTableBody"></tbody>
-            </table>
-          </div>
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
       </div>
     </div>
   </div>
@@ -287,7 +237,6 @@
           maxPrize.textContent = `${data.maxWinner}`
           currentPrize.textContent = `${data.currentCounter}`
 
-<<<<<<< HEAD
           const maxWinner = Number(maxPrize.textContent);
           const currentCounter = Number(currentPrize.textContent);
 
@@ -297,10 +246,6 @@
           } else {
             startBtn.disabled = false
           }
-=======
-          console.log(`CURRENT COUNTER : ${data.currentCounter}`)
-          console.log(`MAX WINNER : ${data.maxWinner}`)
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
         }
       }
       checkInputs();
@@ -327,15 +272,10 @@
     const winnerTable = new DataTable("#winnerTable", {
       pageLength: 8,
       lengthChange: false,
-      columnDefs: [
-        {
+      columnDefs: [{
           targets: "_all",
           className: "align-middle text-center"
         },
-        // {
-        //     targets: 0,
-        //     visible: false // hide ID column
-        // },
         {
           targets: 5,
           width: "300px",
@@ -384,79 +324,9 @@
       });
     }
 
-<<<<<<< HEAD
     function renderWinners(winners) {
       winnerTable.clear();
 
-=======
-    // ORIGINAL
-    // function renderWinners(winners) {
-    //   const formattedWinners = winners.map((winner) => [
-    //     winner.id,
-    //     winner.winningTicket,
-    //     winner.winner,
-    //     winner.area,
-    //     winner.category,
-    //     winner.prize,
-    //     formatTime(winner.dateWon),
-    //   ]);
-
-    //   winnerTable.clear(); // Clears all rows
-    //   winnerTable.rows.add(formattedWinners); // Adds new rows
-    //   winnerTable.draw(); // Re-renders the table
-    // }
-
-    // CURRENTLY WORKING
-    // function renderWinners(winners) {
-    //   const tbody = document.getElementById("winnerTableBody");
-    //   tbody.innerHTML = "";
-    //   // winnerTable.clear()
-
-    //   console.log(`UPDATED SCRIPT`)
-
-    //   let counter = 1;
-
-    //   winners.forEach((winner) => {
-
-    //     let categoryBg = "bg-primary";
-    //     let categoryText = "text-light"
-    //     if (winner.category === "Consolation") {
-    //       categoryBg = "bg-info"
-    //     } else if (winner.category === "Grand Prize") {
-    //       categoryBg = "bg-warning"
-    //       categoryText = "text-dark"
-    //     }
-
-    //     const row = `
-    //       <tr data-id="${winner.id}">
-    //         <td class="align-middle text-center"><span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary" style="width: 40px; max-width: 40px">${counter++}</span></td>
-    //         <td class="align-middle text-center">
-    //           <span class="fw-bold text-primary">${winner.winningTicket}</span>
-    //         </td>
-    //         <td class="align-middle text-center fw-bold">${winner.winner}</td>
-    //         <td class="align-middle text-center">${winner.area}</td>
-    //         <td class="align-middle text-center">
-    //           <span class="badge ${categoryBg} ${categoryText}">
-    //             ${winner.category}
-    //           </span>
-    //         </td>
-    //         <td class="align-middle text-center">
-    //           <span class="badge bg-success">
-    //             ${winner.prize}
-    //           </span>
-    //         </td>
-    //         <td class="align-middle text-center">${formatTime(winner.dateWon)}</td>
-    //       </tr>
-    //     `;
-
-    //     tbody.insertAdjacentHTML("beforeend", row);
-    //   });
-    // }
-
-    function renderWinners(winners) {
-      winnerTable.clear();
-
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
       let counter = 1;
 
       winners.reverse();
@@ -473,10 +343,6 @@
         }
 
         winnerTable.row.add([
-<<<<<<< HEAD
-=======
-          //  winner.id,
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
           `<span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary text-center" style="width:40px;max-width:40px;">${counter++}</span>`,
           `<span class="fw-bold text-primary text-center">${winner.winningTicket}</span>`,
           `<span class="fw-bold text-center">${winner.winner}</span>`,
@@ -501,12 +367,8 @@
         }
       });
 
-<<<<<<< HEAD
     startBtn.addEventListener("click", async () => {
       console.log("CLICK", new Date().toISOString());
-=======
-    startBtn.addEventListener("click", () => {
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
 
       raffleRunning = true;
       checkInputs();

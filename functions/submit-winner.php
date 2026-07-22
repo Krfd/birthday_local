@@ -24,9 +24,16 @@ try {
     if ($data && isset($data['winnerName']) && isset($data['winnerTicket'])) {
         $winnerName = $data['winnerName'];
         $winnerTicket = $data['winnerTicket'];
+        $cust_id = $data['cust_id'];
         $winnerArea = $data['region'];
         $winnerCategory = $data['category'];
         $winnerPrize = $data['prize'];
+
+        // file_put_contents(
+        //     'cust_id.txt',
+        //     $cust_id . PHP_EOL,
+        //     FILE_APPEND | LOCK_EX
+        // );
 
         $ins_winner = $conn->prepare("EXEC insertWinner ?,?,?,?,?");
         $ins_winner->execute([$winnerName, $winnerTicket, $winnerArea, $winnerCategory, $winnerPrize]);

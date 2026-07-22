@@ -4,22 +4,16 @@
     // UPDATED
     $stateFile = 'raffle_state.json';
 
-<<<<<<< HEAD
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = file_get_contents('php://input');
-
-    file_put_contents(
-        "payload.log",
-        date("Y-m-d H:i:s") . " " . file_get_contents("php://input") . PHP_EOL,
-        FILE_APPEND
-    );
-
-    $decoded = json_decode($data, true);
-=======
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = file_get_contents('php://input');
+
+        // file_put_contents(
+        //     "payload.log",
+        //     date("Y-m-d H:i:s") . " " . file_get_contents("php://input") . PHP_EOL,
+        //     FILE_APPEND
+        // );
+
         $decoded = json_decode($data, true);
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
 
         $existing = file_exists($stateFile)
             ? json_decode(file_get_contents($stateFile), true)
@@ -66,67 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "status" => "idle",
             "excludedTicketNumbers" => [],
             "excludedCustomerNames" => [],
-<<<<<<< HEAD
-        ];
-
-    if (isset($decoded['requestNo'])) {
-        $existing['requestNo'] = $decoded['requestNo'];
-    }
-
-    if (array_key_exists('region', $decoded) && $decoded['region'] !== '') {
-        $existing['region'] = $decoded['region'];
-    }
-
-    if (array_key_exists('category', $decoded) && $decoded['category'] !== '') {
-        $existing['category'] = $decoded['category'];
-    }
-
-    if (array_key_exists('prize', $decoded) && $decoded['prize'] !== '') {
-        $existing['prize'] = $decoded['prize'];
-    }
-
-    if (isset($decoded['category'])) {
-        $existing['category'] = $decoded['category'];
-    }
-    if (isset($decoded['prize'])) {
-        $existing['prize'] = $decoded['prize'];
-    }
-
-    $allowedKeys = ["status", "finalInvoice", "excludedTicketNumbers", "excludedCustomerNames"];
-
-    foreach ($allowedKeys as $key) {
-        if (isset($decoded[$key])) {
-            $existing[$key] = $decoded[$key];
-        }
-    }
-
-    // Save back updated state
-    file_put_contents($stateFile, json_encode($existing));
-
-    $response = $existing;
-
-    echo json_encode($response);
-    exit;
-}
-
-if (file_exists($stateFile)) {
-    session_start(); // ⬅️ Add this at the top of the GET block
-    $state = json_decode(file_get_contents($stateFile), true);
-    echo json_encode($state);
-} else {
-    echo json_encode([
-        "status" => "idle",
-        "excludedTicketNumbers" => [],
-        "excludedCustomerNames" => [],
-        "region" => "",
-        "category" => "",
-        "prize" => ""
-    ]);
-}
-=======
             "region" => "",
             "category" => "",
             "prize" => ""
         ]);
     }
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2

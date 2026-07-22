@@ -25,16 +25,15 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Fetch CSV
-    // $csv_content = mb_convert_encoding(file_get_contents($csv_url), 'UTF-8', 'auto');
     $csv_url = 'https://docs.google.com/spreadsheets/d/1qflQZPkC22AnoB9EtC4PurYV2R4-6mzfwdQVBeEhtro/export?format=csv&gid=1195666039';
-    // $csv_content = file_get_contents($csv_url);
     $csv_content = file_get_contents($csv_url);
 
-    // $url = "https://script.google.com/macros/s/AKfycbyDkb6jpE4Xwzk34a76Azck0M_J5Q5mf2-Vb-TpH97CSwsJmwiu08FBC2xkRSLzGvOF/exec";
-    // $content = file_get_contents($url);
-    // $data = str_getcsv($csv_content, "\n");
-
-    // $data = json_decode($content, true);
+    // ALTERNATIVE CSV FETCHING
+    // $csv_url = 'https://script.google.com/macros/s/AKfycbzoDLtQaRWGdyv7DVnvBHL4GC8X2TcUButZJCLodJfZoSMXQGFhMYOZEtsd02-J27AS/exec';
+    // $csv_content = mb_convert_encoding(file_get_contents($csv_url), 'UTF-8', 'auto');
+    // if (!$csv_content) {
+    //     die("Failed to fetch CSV from Google Apps Script");
+    // }
 
     // DEFINE ENCRYPTION KEY AND INITIALIZATION VECTOR
     $encryption_key = 'ENCRYPTING CUSTOMERS DATA';
@@ -46,7 +45,7 @@ try {
     $encrypted_data = openssl_encrypt($csv_content, 'aes-256-cbc', $encryption_key, 0, $iv);
     $encrypted_data_with_iv = base64_encode($iv . $encrypted_data);
 
-    echo 'Encrypted data: ' . $encrypted_data_with_iv . "\n";
+    // echo 'Encrypted data: ' . $encrypted_data_with_iv . "\n";
 
     // DECRYPT CSV DATA
     $decoded_data = base64_decode($encrypted_data_with_iv);
@@ -56,38 +55,17 @@ try {
     $encrypted_data_from_storage = substr($decoded_data, $iv_length);
 
     $decrypted_data = openssl_decrypt($encrypted_data_from_storage, 'aes-256-cbc', $encryption_key, 0, $iv_from_data);
-    // $decrypted_data = openssl_decrypt(
-    //     $encrypted_data_from_storage,
-    //     'aes-256-cbc',
-    //     $encryption_key,
-    //     0,
-    //     $iv_from_data
-    // );
 
-    // if ($decrypted_data === false) {
-    //     die("Decrypt failed");
-    // }
-
-    // $rows = json_decode($decrypted_data, true);
-
-    // if (json_last_error() !== JSON_ERROR_NONE) {
-    //     die("JSON Error: " . json_last_error_msg());
-    // }
-
-    echo "\nDecrypted Data: " . $decrypted_data . "\n";
+    // echo "\nDecrypted Data: " . $decrypted_data . "\n";
 
     if ($decrypted_data === false) die("❌ Error fetching decrypted data.");
 
-    echo "✅ Decrypted data fetched successfully!\n";
+    // echo "✅ Decrypted data fetched successfully!\n";
 
-    // Parse CSV data
-    $rows = str_getcsv($decrypted_data, "\n"); // Split data by new line to get rows
-    // $rows = str_getcsv($data, "\n"); // Split data by new line to get rows
+    $rows = str_getcsv($decrypted_data, "\n");
 
-    // // Skip the first row (header row)
     array_shift($rows);
 
-    // Branch normalization mapping
     $branch_map = [
         'BACOLOD - ARANETA' => 'BACOLOD',
         'BACOLOD - MANDALAGAN' => 'BACOLOD DOS',
@@ -110,19 +88,18 @@ try {
         'SILANG CAVITE' => 'SILANG'
     ];
 
-    //     $stmt = $conn->prepare("INSERT INTO responses (
-    //     Timestamp, Branch_Purchased, First_Name, Last_Name, Suffix,
-    //     Invoice_Number, Mobile_Number, Email, Postal_Address, Ref,
-    //     Validated, InValid, Cancel, SMS
-    // ) VALUES (
-    //     :timestamp, :branch, :first_name, :last_name, :suffix,
-    //     :invoice_number, :mobile_number, :email, :postal_address, :ref,
-    //     :validated, :invalid, :cancel, :sms
-    // )");
-
-    $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?,?,?,?");
+    // $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?,?,?,?");
+    $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?");
 
     $count = 0;
+
+    // Get the current highest Cust_Id from the database
+    $maxCustStmt = $conn->query("SELECT ISNULL(MAX(cust_Id), 0) FROM responses");
+
+    $nextCustId = (int) $maxCustStmt->fetchColumn() + 1;
+
+    // Store mobile number => Cust_Id mappings
+    $customerMap = [];
 
     // Loop through each row and insert if not exists
     foreach ($rows as $row) {
@@ -147,6 +124,35 @@ try {
         if (count($columns) < 13) continue; // Skip incomplete rows
         // if (count($row) < 13) continue; // Skip incomplete rows
 
+        $mobileNumber = trim($columns[5]);
+
+        if (isset($customerMap[$mobileNumber])) {
+
+            // Same mobile number encountered in this import
+            $cust_Id = $customerMap[$mobileNumber];
+        } else {
+
+            // Check if this mobile number already exists in the database
+            $custStmt = $conn->prepare("SELECT TOP 1 cust_Id FROM responses WHERE Mobile_Number = ?");
+
+            $custStmt->execute([$mobileNumber]);
+
+            $existingCustId = $custStmt->fetchColumn();
+
+            if ($existingCustId !== false) {
+
+                // Existing mobile number gets its existing Cust_Id
+                $cust_Id = (int) $existingCustId;
+            } else {
+
+                // New mobile number gets a new incremental Cust_Id
+                $cust_Id = $nextCustId++;
+            }
+
+            // Remember this mobile number for the rest of this import
+            $customerMap[$mobileNumber] = $cust_Id;
+        }
+
         $consent1 = strtolower(trim($columns[9]));
         $consent2 = strtolower(trim($columns[10]));
         $consent3 = strtolower(trim($columns[11]));
@@ -155,7 +161,6 @@ try {
         // Skip if any consent is not "yes"
         if ($consent1 !== 'yes' || $consent2 !== 'yes' || $consent3 !== 'yes' || $consent4 !== 'yes') {
             echo "❌ Skipping record due to missing consent (Invoice: {$columns[4]})\n";
-            // echo "❌ Skipping record due to missing consent (Invoice: {$invoice})\n";
             continue;
         }
 
@@ -165,10 +170,8 @@ try {
         $normalized_branch = $branch_map[$original_branch] ?? $original_branch;
 
         $email = strtolower(trim($columns[6]));
-        // $email = strtolower(trim($email));
 
         $original_ref = "$original_branch | {$columns[5]} | " . mb_strtoupper("{$columns[2]} {$columns[3]}", 'UTF-8');
-        // $original_ref = "$original_branch | {$invoice} | " . mb_strtoupper("{$firstname} {$lastname}", 'UTF-8');
 
 
         $checkStmt = $conn->prepare("SELECT COUNT(*) FROM responses WHERE Ref = :ref");
@@ -181,40 +184,8 @@ try {
             continue;
         }
 
-        // $stmt->execute([
-        //     // ':timestamp' => $columns[0],
-        //     // ':timestamp' => $timestamp,
-        //     // ':branch' => $normalized_branch,
-        //     // ':first_name' => mb_strtoupper($firstname, 'UTF-8'),
-        //     // ':last_name' => mb_strtoupper($lastname, 'UTF-8'),
-        //     // ':suffix' => isset($suffix) ? mb_strtoupper(trim($suffix), 'UTF-8') : '',
-        //     // ':invoice_number' => $invoice,
-        //     // ':mobile_number' => $mobile,
-        //     // ':email' => strtolower(trim($email)),
-        //     // ':postal_address' => mb_strtoupper($postal, 'UTF-8'),
-        //     // ':ref' => $original_ref,
-        //     // ':validated' => 'N',
-        //     // ':invalid' => 'N',
-        //     // ':cancel' => 'N',
-        //     // ':sms' => 'N'
-        //     ':timestamp' => $columns[0],
-        //     ':branch' => $normalized_branch,
-        //     ':first_name' => mb_strtoupper($columns[2], 'UTF-8'),
-        //     ':last_name' => mb_strtoupper($columns[3], 'UTF-8'),
-        //     ':suffix' => isset($columns[14]) ? mb_strtoupper(trim($columns[14]), 'UTF-8') : '',
-        //     ':invoice_number' => $columns[4],
-        //     ':mobile_number' => $columns[5],
-        //     ':email' => strtolower(trim($columns[6])),
-        //     ':postal_address' => mb_strtoupper($columns[7], 'UTF-8'),
-        //     ':ref' => $original_ref,
-        //     ':validated' => 'N',
-        //     ':invalid' => 'N',
-        //     ':cancel' => 'N',
-        //     ':sms' => 'N'
-        // ]);
-
-
         $stmt->execute([
+            $cust_Id,
             $columns[0],
             $normalized_branch,
             mb_strtoupper($columns[2], 'UTF-8'),
@@ -224,15 +195,12 @@ try {
             $columns[5],
             strtolower(trim($columns[6])),
             mb_strtoupper($columns[7], 'UTF-8'),
-            $original_ref,
-            // ':validated' => 'N',
-            // ':invalid' => 'N',
-            // ':cancel' => 'N',
-            // ':sms' => 'N'
+            $original_ref
         ]);
         $count++;
 
-        echo "✅ Data inserted for Invoice Number: {$columns[4]} (Branch: {$normalized_branch})\n";
+        echo "About to insert: {$columns[4]} | {$columns[5]}<br>";
+        // echo "✅ Data inserted for Invoice Number: {$columns[4]} (Branch: {$normalized_branch})\n";
     }
 
     $log = date("Y-m-d H:i:s") . " Imported: $count rows\n";

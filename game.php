@@ -197,7 +197,8 @@
     </div>
     <div class="mt-5">
       <h2 style="font-size: clamp(1.5rem, 5vw, 5rem); text-align: center;">
-        <span class="fw-bold font" data-text="WINNER">WINNER</span>
+        <!-- <span class="fw-bold font" data-text="WINNER">WINNER</span> -->
+        <span class="fw-bold font" id="category"></span>
       </h2>
       <div id="winner-display" class="font" aria-live="assertive">
         <span id="winner-name"></span>
@@ -220,6 +221,7 @@
     let currentRegion = "";
     let currentCategory = "";
     let currentPrize = "";
+    let cust_Id = 0;
 
     let lastStatus = null;
 
@@ -265,10 +267,14 @@
           .map((u) => ({
             customerName: u.customerName,
             ticketNumbers: u.ticketNumbers,
+            cust_Id: u.cust_Id
           }));
 
         invoices = users.flatMap((user) => user.ticketNumbers.map(String));
         names = users.map((user) => user.customerName);
+        cust_Id = users.map((id) => id.cust_Id)
+
+        console.log(`CUSTOMER ID: ${cust_Id}`)
 
         return fetch("sync.php");
       })
@@ -310,6 +316,13 @@
 
       document.getElementById("winner-display").textContent = "";
       finalInvoice = "";
+      const categoryDisplay = document.getElementById("category")
+      if (currentCategory !== "Grand Prize") {
+        categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory} Prize</strong>`;
+      } else {
+        categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory}</strong>`;
+      }
+      // categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory}</strong>`;
 
       const availableInvoices = invoices.filter((ticket) => {
         const user = users.find((u) =>
@@ -323,20 +336,10 @@
       });
 
       if (availableInvoices.length === 0) {
-        document.getElementById("winner-display").innerHTML =
-          `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
+        // document.getElementById("winner-display").innerHTML = `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
         isRolling = false;
         hasStarted = false;
         finalInvoice = "";
-
-        console.log(`DONE: `)
-        console.log({
-          status,
-          currentRegion,
-          currentCategory,
-          currentPrize
-        });
-        console.log(``)
 
         fetch("./sync.php", {
           method: "POST",
@@ -441,36 +444,11 @@
 
         rollSingleDigit(order[0]);
       }
-<<<<<<< HEAD
       rollNextDigit();
-=======
       // console.log(`UPDATED RANDOMIZER`)
-
-      rollNextDigit();
-
-      console.log(`ROLLING: `)
-      console.log({
-        status,
-        currentRegion,
-        currentCategory,
-        currentPrize
-      });
-      console.log(``)
-
-      fetch("./sync.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "rolling",
-          finalInvoice,
-        }),
-      });
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
     }
 
-    function submitWinnerDetails(winnerName, winnerTicket) {
+    function submitWinnerDetails(winnerName, winnerTicket, cust_id) {
       console.log(
         `Submitting winner details: ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
       );
@@ -483,6 +461,7 @@
           body: JSON.stringify({
             winnerName,
             winnerTicket,
+            cust_id,
             region: currentRegion,
             category: currentCategory,
             prize: currentPrize,
@@ -519,7 +498,7 @@
 
       if (!winnerName || winnerName === "Unknown") {
         console.error("Error: Winner's name is undefined or invalid.");
-        winnerName = "Unknown"; // Default to "Unknown" to avoid crashing
+        // winnerName = "Unknown"; // Default to "Unknown" to avoid crashing
       }
 
       // UPDATES THE SET IN MEMORY TO SURE:
@@ -532,18 +511,26 @@
 
         excludedCustomerNames.add(winnerUser.customerName);
 
+        const winnerCustId = winnerUser.cust_id
+
         users = users.filter((u) => u.customerName !== winnerUser.customerName);
         invoices = invoices.filter(
           (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket)),
         );
         names = users.map((u) => u.customerName); // Make sure names are updated
+        // cust_id = users.map((id) => id.cust_id)
       }
+
+      // console.log(`TYPE OF CUSTOMER id : ${typeof(cust_id)}`)
+      // console.log(`TYPE OF CUSTOMER id : ${typeof(winnerCustId)}`)
+      console.log(`UPDATED CUSTOMER ID: ${winnerCustId}`)
 
       const winnerDisplay = document.getElementById("winner-display");
 
       winnerDisplay.innerHTML = `<strong data-text="${winnerName}" class="winnerFont">${winnerName}</strong>`; // Final winner name
       showConfetti(winnerName, winnerTicket);
-      submitWinnerDetails(winnerName, winnerTicket);
+      // submitWinnerDetails(winnerName, winnerTicket, cust_id);
+      submitWinnerDetails(winnerName, winnerTicket, winnerCustId);
     }
 
     function showConfetti(winnerName, winnerTicket) {
@@ -586,28 +573,7 @@
 
           excludedCustomerNames.add(winnerName);
 
-<<<<<<< HEAD
-          // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA 
-          console.log(
-            "POST", {
-              status,
-              finalInvoice,
-              region: currentRegion,
-              category: currentCategory,
-              prize: currentPrize
-            }
-          );
-=======
-          console.log(`TO BE EXCLUDED: `)
-          console.log({
-            status,
-            currentRegion,
-            currentCategory,
-            currentPrize
-        });
-
           // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
->>>>>>> 7fcf21320746503331bcad9e1f224ef62c1ee1f2
           fetch("./sync.php", {
             method: "POST",
             headers: {

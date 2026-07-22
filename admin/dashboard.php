@@ -14,19 +14,19 @@
   <link rel="stylessheet" href="../css/sweetalert2.min.css" />
   <style>
     body {
-      /* background: linear-gradient(135deg, #e0eafc, #cfdef3); */
-      height: 100vh;
+      height: 100%;
+      min-height: 100vh;
       font-family: sans-serif;
-      background: #c2ddff;
+      background:
+        linear-gradient(rgba(180, 30, 30, 0.45), rgba(180, 30, 30, 0.45)),
+        url("../assets/img/newbg.jpg") no-repeat center center / cover;
     }
 
-    /* Firefox */
     * {
       scrollbar-width: thin;
       scrollbar-color: #3b82f6 #e0e7ff
     }
 
-    /* Chrome, Safari, Edge (WebKit-based) */
     *::-webkit-scrollbar {
       width: 2px;
       height: 2px;
@@ -98,7 +98,7 @@
           <hr>
           <form method="post" class="mt-3" id="formAddDept">
             <div class="mt-3">
-              <label for="dept">Department <span class="text-danger">*</span></label>
+              <label for="dept" class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
               <input type="text" class="form-control mt-2" name="department" maxlength="20" required>
             </div>
             <button
@@ -130,11 +130,11 @@
           <form method="post" class="mt-3" id="formAddUser">
             <div class="mt-3 d-flex justify-content-between align-items-center gap-3">
               <div class="col">
-                <label for="username">Username <span class="text-danger">*</span></label>
+                <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
                 <input type="text" class="form-control mt-2" name="username" maxlength="20" required>
               </div>
               <div class="col">
-                <label for="dept">Department <span class="text-danger">*</span></label>
+                <label for="dept" class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
                 <select name="dept" id="dept" class="form-select mt-2" required>
                   <?php
 
@@ -293,21 +293,21 @@
     id="showWinners">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
       <div class="modal-content rounded-3 shadow">
-        <div class="modal-body p-4">
+        <div class="modal-body p-4" style="max-height: 700px">
           <div class="d-flex">
             <h5 class="mb-0 fw-semibold text-center text-dark">WINNERS</h5>
             <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
           </div>
           <hr>
-          <div class="table-responsive">
+          <div class="table-responsive" style="max-height: 500px">
             <table class="table datatables" id="winnerTable">
               <thead>
                 <tr>
                   <th class="text-start">E-TICKET</th>
                   <th>CUSTOMER</th>
                   <th>AREA</th>
-                  <th>CATEGORY</th>
-                  <th>PRIZE</th>
+                  <th class="text-center">CATEGORY</th>
+                  <th class="text-center">PRIZE</th>
                   <th>TIMESTAMP</th>
                 </tr>
               </thead>
@@ -323,12 +323,23 @@
                   if ($getWinners) {
                     foreach ($getWinners as $win) {
 
+                      $catBg = '';
+                      $category = $win->category;
+
+                      if ($category === "Consolation") {
+                        $catBg = "badge bg-info";
+                      } else if ($category === "Grand Prize") {
+                        $catBg = "badge bg-warning";
+                      } else {
+                        $catBg = "badge bg-primary";
+                      }
+
                       echo '<tr>
-                      <td class="text-start">' . $win->winningTicket . '</td> 
-                      <td>' . $win->winner . '</td> 
+                      <td class="text-primary text-center">' . $win->winningTicket . '</td> 
+                      <td class="text-primary fw-bold">' . $win->winner . '</td> 
                       <td>' . $win->area . '</td>
-                      <td>' . $win->category . '</td>
-                      <td>' . $win->prize . '</td>
+                      <td class="text-center"><span class="' . $catBg . '">' . $category . '</span></td>
+                      <td class="text-center"><span class="badge bg-success">' . $win->prize . '</span></td>
                     <td>' . date('F. d, Y - h:i:s A', strtotime($win->dateWon)) . '</td>
                     </tr>';
                     }
@@ -394,9 +405,9 @@
                       }
 
                       echo '<tr>
-                      <td>' . $act->id . '</td> 
+                      <td class="text-primary text-center">' . $act->id . '</td> 
                       <td>' . $act->username . '</td> 
-                      <td>' . $act->dept . '</td>
+                      <td class="text-center"><span class="badge bg-success">' . $act->dept . '</span></td>
                       <td>' . $prev . '</td>
                       <td>' . $new . '</td>
                       <td style="width: 150px">' . date('F, d, Y - h:i:s A', strtotime($act->modified)) . '</td>
@@ -424,7 +435,7 @@
       <div class="modal-content rounded-3 shadow">
         <div class="modal-body p-4">
           <div class="d-flex">
-            <h5 class="mb-0 fw-semibold text-center text-dark">USER ACCESS <i class="bi bi-question-circle-fill" data-bs-toggle="modal" data-bs-target="#userLogs" title="View Logs"></i></h5>
+            <h5 class="mb-0 fw-semibold text-center text-dark text-uppercase">User access <i class="bi bi-question-circle-fill text-warning" style="cursor: pointer" data-bs-toggle="modal" data-bs-target="#userLogs" title="View Logs"></i></h5>
             <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
           </div>
           <hr>
@@ -433,7 +444,7 @@
               <thead>
                 <tr>
                   <th>USER</th>
-                  <th>DEPARTMENT</th>
+                  <th class="text-center">DEPARTMENT</th>
                   <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
@@ -456,7 +467,7 @@
 
                       echo '<tr>
                       <td>' . $access_user . '</td>
-                      <td>' . $access_dept . '</td>
+                      <td class="text-center">' . $access_dept . '</td>
                       <td>';
 
                       if ($isDisabled == 1) {
@@ -518,16 +529,16 @@
             <input type="hidden" name="user_id" value="<?php echo $userId ?>" required>
             <div class="mt-3 d-flex flex-column gap-3 w-auto">
               <div class="col">
-                <label for="old">Old Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control mt-1" name="old" id="old" maxlength="20" required>
+                <label for="old" class="form-label fw-semibold">Old Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="old" id="old" maxlength="20" required>
               </div>
               <div class="col">
-                <label for="new" class="form-label">New Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control mt-1" name="new" id="new" maxlength="20" required>
+                <label for="new" class="form-label fw-semibold">New Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="new" id="new" maxlength="20" required>
               </div>
               <div class="col">
-                <label for="confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control mt-1" name="confirm" id="confirm" maxlength="20" required>
+                <label for="confirm" class="form-label f-semibold">Confirm Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="confirm" id="confirm" maxlength="20" required>
               </div>
             </div>
             <button
@@ -542,9 +553,7 @@
   </div>
 
   <div class="position-relative py-5">
-    <!-- Center Heading -->
-    <h1 class="fw-bold text-center m-0 text-uppercase">Administrator</h1>
-    <!-- BUTTONS -->
+    <h1 class="fw-bold text-center m-0 text-uppercase text-light">Administrator</h1>
     <div class="container mt-3 d-flex justify-content-center align-items-center gap-3">
       <button type="button" class="btn btn-sm btn bg-danger-subtle border border-danger text-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i> <span class="d-none d-md-inline-block">Logout</span></button>
       <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#logs"><i class="bi bi-alarm-fill"></i> <span class="d-none d-md-inline-block">Logs</span></button>
@@ -557,7 +566,7 @@
     <!-- TABLES -->
     <div class="container-fluid d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-start mt-3 mt-md-5">
       <!-- CUSTOMER ENTRIES -->
-      <div class="container bg-light rounded-1 p-3 col-12 col-lg-10 shadow-sm">
+      <div class="d-block mx-auto bg-light rounded-5 p-5 col-12 col-lg-10 shadow">
         <h1 class="fw-semibold">Customer Entries</h1>
         <div class="table-responsive">
           <table class="table datatables" id="customers">
@@ -619,13 +628,13 @@
                     }
 
                     echo '<tr>
-                          <td>' . $ticketDisplay . '</td>
+                          <td class="text-primary">' . $ticketDisplay . '</td>
                           <td class="text-center">' . $data['total_tickets'] . '</td>
-                          <td>' . $data['branch'] . '</td>
-                          <td>' . $data['first'] . ' ' . $data['suffix'] . '</td>
-                          <td>' . $data['last'] . '</td>
-                          <td>' . $data['invoice'] . '</td>
-                          <td>' . $data['mobile'] . '</td>
+                          <td class="text-center"><span class="badge bg-primary">' . $data['branch'] . '</span></td>
+                          <td class="text-center">' . $data['first'] . ' ' . $data['suffix'] . '</td>
+                          <td class="text-center">' . $data['last'] . '</td>
+                          <td class="text-center text-success">' . $data['invoice'] . '</td>
+                          <td class="text-center">' . $data['mobile'] . '</td>
                           <td class="text-center">' . $data['email'] . '</td>
                           <td>';
                     if ($data['is_excluded'] == 0) {

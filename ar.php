@@ -14,8 +14,14 @@
     <link rel="stylessheet" href="css/sweetalert2.min.css" />
     <style>
         body {
-            background: linear-gradient(135deg, #e0eafc, #cfdef3);
-            height: 70vh;
+            /* background: linear-gradient(135deg, #e0eafc, #cfdef3); */
+            background:
+                linear-gradient(rgba(180, 30, 30, 0.45), rgba(180, 30, 30, 0.45)),
+                url("assets/img/newbg.jpg") no-repeat center center / cover;
+            /* height: 70vh; */
+            /* min-height: 100%; */
+            height: 90vh;
+            min-height: auto;
             font-family: sans-serif;
         }
 
@@ -52,6 +58,11 @@
             background-color: #f8f9fa;
             /* Match your table's background */
             z-index: 10;
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: none;
         }
     </style>
 </head>
@@ -104,16 +115,16 @@
                         <input type="hidden" name="user_id" value="<?php echo $userId ?>" required>
                         <div class="mt-3 d-flex flex-column gap-3 w-auto">
                             <div class="col">
-                                <label for="old">Old Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control mt-1" name="old" id="old" maxlength="20" required>
+                                <label for="old" class="fw-semibold form-label">Old Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="old" id="old" maxlength="20" required>
                             </div>
                             <div class="col">
-                                <label for="new" class="form-label">New Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control mt-1" name="new" id="new" maxlength="20" required>
+                                <label for="new" class="fw-semibold form-label">New Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="new" id="new" maxlength="20" required>
                             </div>
                             <div class="col">
-                                <label for="confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control mt-1" name="confirm" id="confirm" maxlength="20" required>
+                                <label for="confirm" class="fw-semibold form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="confirm" id="confirm" maxlength="20" required>
                             </div>
                         </div>
                         <button
@@ -128,21 +139,19 @@
     </div>
 
     <div class="position-relative py-3 mt-3">
-        <!-- Left Side Buttons -->
-        <div class="position-absolute start-0 m-3 ps-2">
-            <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i> Logout</button>
-            <br>
-            <button type="button" class="btn btn-sm btn-light text-dark mt-3" data-bs-toggle="modal" data-bs-target="#update" title="Update Password"><i class="bi bi-pen"></i> <span class="d-none d-md-inline-block">Account</span></button>
-        </div>
-        <!-- Center Heading -->
-        <h1 class="fw-bold text-center m-0 text-uppercase"><?php echo $user_name . ' - ' . $dept ?></h1>
+        <button id="logout-btn" style="height: 50px; width: 50px" class="btn border border-danger bg-danger-subtle btn-sm position-absolute rounded-5 top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
+            <i class="bi bi-box-arrow-left d-flex justify-content-center align-items-center text-danger"></i>
+        </button>
+        <h1 class="fw-bold text-center m-0 text-uppercase text-light"><?php echo $user_name . ' - ' . $dept ?></h1>
     </div>
     <div class="container-fluid mt-3 d-flex flex-column flex-lg-row justify-content-between mt-3 mt-md-5 gap-3 align-items-start">
-        <!-- CUSTOMER ENTRIES -->
-        <div class="container bg-light rounded-1 p-3 col-12 col-lg-8 shadow-sm mb-5" style="height: 70vh; max-height: 70vh;">
+        <div class="container bg-light rounded-5 p-5 col-12 col-lg-8 shadow" style="height: 70vh; max-height: 70vh;">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="fw-semibold">Customer Entries</h1>
-                <button class="btn btn-sm btn-success float-end fw-bold shadow-sm" id="exportBtn">Export CSV</button>
+                <div class="d-flex align-items-baseline gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#update" title="Update Password"><i class="bi bi-pen"></i> <span class="d-none d-md-inline-block">Account</span></button>
+                    <button class="btn btn-sm btn-success float-end fw-bold shadow-sm" id="exportBtn">Export CSV</button>
+                </div>
             </div>
             <div class="table-responsive overflow-y-scroll" style="height: 55vh">
                 <table class="table datatables" id="entries">
