@@ -15,7 +15,7 @@ try {
     $insert = $conn->prepare("INSERT INTO users (username, password, dept, region, disabled, isAdmin, created) VALUES ('Karlalooo', :password, '', '', 0, 1, SYSDATETIME())");
     $insert->bindParam(":password", $password);
 
-    // $insert = $conn->prepare("UPDATE users SET password = :password WHERE dept = 'ONLINE'");
+    // $insert = $conn->prepare("UPDATE users SET password = :password WHERE id = 10");
     // $insert->bindParam(":password", $password);
 
     if ($insert->execute()) {

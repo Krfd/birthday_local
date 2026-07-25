@@ -20,7 +20,6 @@ include("../config/connection.php");
 $data = json_decode(file_get_contents("php://input"), true);
 
 try {
-    // Check if the data is received
     if ($data && isset($data['winnerName']) && isset($data['winnerTicket'])) {
         $winnerName = $data['winnerName'];
         $winnerTicket = $data['winnerTicket'];
@@ -29,11 +28,8 @@ try {
         $winnerCategory = $data['category'];
         $winnerPrize = $data['prize'];
 
-        // file_put_contents(
-        //     'cust_id.txt',
-        //     $cust_id . PHP_EOL,
-        //     FILE_APPEND | LOCK_EX
-        // );
+        $updateCustId = $conn->prepare("EXEC UpdateCustId ?");
+        $updateCustId->execute([$cust_id]);
 
         $ins_winner = $conn->prepare("EXEC insertWinner ?,?,?,?,?");
         $ins_winner->execute([$winnerName, $winnerTicket, $winnerArea, $winnerCategory, $winnerPrize]);

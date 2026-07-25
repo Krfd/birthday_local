@@ -4,16 +4,31 @@ include("../config/connection.php");
 
 try {
     // $stmt = $conn->prepare("SELECT TOP (2) First_Name, Last_Name, Ticket_Number
-    $stmt = $conn->prepare("SELECT cust_Id, First_Name, Last_Name, Ticket_Number
-    FROM current_entries 
-        -- ce
-        -- WHERE ce.Excluded = 0
-        -- AND NOT EXISTS (
-        --     SELECT 1
-        --     FROM winners w
-        --     WHERE w.winner = ce.First_Name + ' ' + ce.Last_Name
-        -- )
+    // $stmt = $conn->prepare("SELECT First_Name, Last_Name, Ticket_Number
+    // FROM current_entries 
+    //     ce
+    //     WHERE ce.Excluded = 0
+    //     AND NOT EXISTS (
+    //         SELECT 1
+    //         FROM winners w
+    //         WHERE w.winner = ce.First_Name + ' ' + ce.Last_Name
+    //     )
+    // ");
+
+    // $stmt = $conn->prepare("SELECT cust_Id, First_Name, Last_Name, Ticket_Number
+    // FROM current_entries WHERE hasWon <> 1");
+
+    $stmt = $conn->prepare("SELECT 
+        ce.cust_Id,
+        ce.First_Name,
+        ce.Last_Name,
+        ce.Ticket_Number
+        FROM current_entries ce
+        INNER JOIN raffle_entries re
+            ON ce.cust_Id = re.cust_Id
+        WHERE re.hasWon <> 1 OR ce.Excluded = 0
     ");
+
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -35,7 +50,7 @@ try {
         $result[] = [
             'customerName' => $name,
             'ticketNumbers' => $ticket,
-            'cust_Id' => $cust_Id
+            'cust_id' => $cust_Id
         ];
     }
 

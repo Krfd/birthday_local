@@ -267,14 +267,14 @@
           .map((u) => ({
             customerName: u.customerName,
             ticketNumbers: u.ticketNumbers,
-            cust_Id: u.cust_Id
+            cust_id: u.cust_id
           }));
+
+        console.log("PROCESSED USERS:", users);
 
         invoices = users.flatMap((user) => user.ticketNumbers.map(String));
         names = users.map((user) => user.customerName);
-        cust_Id = users.map((id) => id.cust_Id)
-
-        console.log(`CUSTOMER ID: ${cust_Id}`)
+        cust_id = users.map((id) => id.cust_id)
 
         return fetch("sync.php");
       })
@@ -318,7 +318,7 @@
       finalInvoice = "";
       const categoryDisplay = document.getElementById("category")
       if (currentCategory !== "Grand Prize") {
-        categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory} Prize</strong>`;
+        categoryDisplay.innerHTML = `<strong data-text="${currentCategory} Prize" class="winnerFont">${currentCategory} Prize</strong>`;
       } else {
         categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory}</strong>`;
       }
@@ -450,7 +450,7 @@
 
     function submitWinnerDetails(winnerName, winnerTicket, cust_id) {
       console.log(
-        `Submitting winner details: ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
+        `Submitting winner details: ${cust_id} ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
       );
 
       fetch("./functions/submit-winner.php", {
@@ -461,7 +461,7 @@
           body: JSON.stringify({
             winnerName,
             winnerTicket,
-            cust_id,
+            cust_id: cust_id,
             region: currentRegion,
             category: currentCategory,
             prize: currentPrize,
@@ -495,6 +495,7 @@
       );
 
       let winnerName = winnerUser ? winnerUser.customerName : "Unknown";
+      let winnerCustId = null;
 
       if (!winnerName || winnerName === "Unknown") {
         console.error("Error: Winner's name is undefined or invalid.");
@@ -511,7 +512,7 @@
 
         excludedCustomerNames.add(winnerUser.customerName);
 
-        const winnerCustId = winnerUser.cust_id
+        winnerCustId = winnerUser.cust_id
 
         users = users.filter((u) => u.customerName !== winnerUser.customerName);
         invoices = invoices.filter(
@@ -520,9 +521,6 @@
         names = users.map((u) => u.customerName); // Make sure names are updated
         // cust_id = users.map((id) => id.cust_id)
       }
-
-      // console.log(`TYPE OF CUSTOMER id : ${typeof(cust_id)}`)
-      // console.log(`TYPE OF CUSTOMER id : ${typeof(winnerCustId)}`)
       console.log(`UPDATED CUSTOMER ID: ${winnerCustId}`)
 
       const winnerDisplay = document.getElementById("winner-display");

@@ -113,14 +113,13 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $raffle_stmt = $conn->prepare("INSERT INTO [$raffle_table] 
-        ([Counter], [cust_Id], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Exported])
+        ([Counter], [cust_Id], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [InvAmt], [Mobile_Number], [Email], [Excluded], [Exported])
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     // ORIGINAL
     $existing_check = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table] WHERE [Branch] = ? AND [Invoice_Number] = ? AND (([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?) OR ([First_Name] = ? AND [Last_Name] = ? AND [Suffix] = ?))");
-
     // MISMATCH
-    $mismatch_stmt = $conn->prepare("INSERT INTO [$mismatch_table] (docId, Branch, First_Name, Last_Name, Suffix, Invoice_Number, Mobile_Number, Email, Findings, Postal_Address, Updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $mismatch_stmt = $conn->prepare("INSERT INTO [$mismatch_table] (docId, cust_Id, TicketCount, DocNum, Branch, First_Name, Last_Name, Suffix, Invoice_Number, InvAmt, InvName, InvDate, Mobile_Number, Email, Findings, Postal_Address, Updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     // OVERALL FINDINGS
     $overall = $conn->prepare("INSERT INTO [$overall_findings_table] (docId, branch, first_name, last_name, suffix, inv, mobile, email, postal, findings) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     // INVALID INVOICES
@@ -142,7 +141,10 @@ try {
         ]);
     }
 
-    $employee_check_stmt = $conn->prepare("SELECT 1 FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
+    // VALIDATION
+    $validation = $conn->prepare("EXEC Validation ?,?");
+    // EMPLOYEE VALIDATION
+    $employee_check_stmt = $conn->prepare("SELECT TOP 1 * FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
 
     $ticketed = 0;
 
@@ -171,538 +173,221 @@ try {
 
         $updated = 0;
 
-        // $validation_proc = $conn->prepare("EXEC CustomerValidation1 @mLName_ = ?, @mFName_ = ?, @mSuffix_ = ?, @mMDN_ = ?, @mBranch_ = ?");
-        $validation_proc = $conn->prepare("EXEC CustomerValidation1 ?,?,?,?,?");
+        // $validation_proc = $conn->prepare("EXEC CustomerValidation1 ?,?,?,?,?");
 
-        $name_variants = generate_name_variants($first_name);
-        $last_variants = generate_name_variants($last_name);
-        $suffix_variants = generate_name_variants($suffix);
+        $validation->execute([$inv_val, $branch_val]);
 
         $results = [];
-        $matched = false;
 
-        foreach ($name_variants as $fname) {
-            foreach ($last_variants as $lname) {
-                foreach ($suffix_variants as $sfx) {
-                    $validation_proc->execute([$lname, $fname, $sfx, $inv_val, $branch_val]);
-                    $results = $validation_proc->fetchAll(PDO::FETCH_ASSOC);
-                    if (count($results) > 0) {
-                        $first_name = $fname;
-                        $last_name = $lname;
-                        $suffix = $sfx;
-                        $matched = true;
-                        break 3;
-                    }
-                    $employee_check_stmt->execute([$first_name, $last_name]);
-                    $is_employee = $employee_check_stmt->fetchColumn();
-
-                    if ($is_employee) {
-                        $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = :id")->execute([$docId]);
-                        continue 3;
-                    } else {
-                        $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
-                        $exists_invalid->execute([$docId]);
-
-                        if (!$exists_invalid->fetchColumn()) {
-                            $invalid_invoice_stmt->execute([
-                                $docId,
-                                $branch_val,
-                                $first_name,
-                                $last_name,
-                                $suffix,
-                                $inv_val,
-                                $mobile_val,
-                                $email_val,
-                                'invoice contain letter or no match in SAP',
-                                $postal_address
-                            ]);
-                        }
-
-                        $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                        $exists_overall->execute([$docId]);
-
-                        if (!$exists_overall->fetchColumn()) {
-                            overall(
-                                $overall,
-                                $docId,
-                                $branch_val,
-                                $first_name,
-                                $last_name,
-                                $suffix,
-                                $inv_val,
-                                $mobile_val,
-                                $email_val,
-                                $postal_address,
-                                $finding_type = 'invoice contain letter or no match in SAP'
-                            );
-                        }
-
-                        $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = :id")->execute([$docId]);
-                        continue 3;
-                    }
-                }
-            }
-        }
+        $results = $validation->fetchAll(PDO::FETCH_ASSOC);
 
         $valid_match_found = false;
 
         foreach ($results as $validation_result) {
 
-            $total_amt = (float) ($validation_result['TotalAmt'] ?? null);
+            $total_amt = (float) ($validation_result['InvAmt'] ?? null);
             $sap_docnum = $validation_result['DocNum'] ?? null;
-            $doc_date = $validation_result['DocDate'];
+            $firstName = $validation_result['First_Name'] ?? null;
+            $lastName = $validation_result['Last_Name'] ?? null;
+            $ticketCount = $validation_result['TicketCounter'];
+            $invName = $validation_result['Last_Name'] . ' ' . $validation_result['First_Name'];
+            $docDate = $validation_result['DocDate'] ?? null;
 
-            $employee_check_stmt->execute([$first_name, $last_name]);
+            $employee_check_stmt->execute([$firstName, $lastName]);
             $is_employee = $employee_check_stmt->fetchColumn();
 
-            if ($is_employee) {
-                $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                $exists_overall->execute([$docId]);
-                if (!$exists_overall->fetchColumn()) {
-                    overall(
-                        $overall,
-                        $docId,
-                        $branch_val,
-                        $first_name,
-                        $last_name,
-                        $suffix,
-                        $inv_val,
-                        $mobile_val,
-                        $email_val,
-                        $postal_address,
-                        $finding_type = 'employee'
-                    );
-                }
-
-                $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = :id")->execute([$docId]);
-                continue;
-            }
-
-            if ($validation_result['LastName'] === 'Y' && $validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'Y') {
-                $existing_check->execute([
-                    $branch_val,
-                    $inv_val,
-                    $first_name,
-                    $last_name,
-                    $suffix,
-                    $last_name,
-                    $first_name,
-                    $suffix
-                ]);
-
-                $total_amt = (float) ($validation_result['TotalAmt'] ?? 0);
-                $ticket_count = floor($total_amt / 5000);
-
-                if ($ticket_count > 0) {
+            if ($total_amt >= 5000) {
+                if ($is_employee) {
+                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = :id")->execute([$docId]);
+                    continue;
+                } else {
+                    // 100K UP
                     if ($total_amt >= 100000) {
                         $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
                         $exists_check->execute([$docId]);
 
                         if (!$exists_check->fetchColumn()) {
-                            $mismatch_stmt->execute([
-                                $docId,
-                                $branch_val,
-                                $first_name,
-                                $last_name,
-                                $suffix,
-                                $inv_val,
-                                $mobile_val,
-                                $email_val,
-                                'amount',
-                                $postal_address,
-                                $updated
-                            ]);
+                            $mismatch_stmt->execute(
+                                [
+                                    $docId,
+                                    $cust_Id,
+                                    $ticketCount,
+                                    $sap_docnum,
+                                    $branch_val,
+                                    $firstName,
+                                    $lastName,
+                                    $suffix,
+                                    $inv_val,
+                                    $total_amt,
+                                    $invName,
+                                    $docDate,
+                                    $mobile_val,
+                                    $email_val,
+                                    '100K up',
+                                    $postal_address,
+                                    $updated
+                                ]
+                            );
 
                             $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
                             $exists_overall->execute([$docId]);
+
                             if (!$exists_overall->fetchColumn()) {
                                 overall(
                                     $overall,
                                     $docId,
                                     $branch_val,
-                                    $first_name,
-                                    $last_name,
+                                    $firstName,
+                                    $lastName,
                                     $suffix,
                                     $inv_val,
                                     $mobile_val,
                                     $email_val,
                                     $postal_address,
-                                    $finding_type = 'amount'
+                                    $finding_type = '100K up'
                                 );
                             }
                             $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
                         }
                     } else {
-                        $existing_check->execute([
-                            $branch_val,
-                            $inv_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $last_name,
-                            $first_name,
-                            $suffix
-                        ]);
+                        $existing_check->execute(
+                            [
+                                $branch_val,
+                                $inv_val,
+                                $firstName,
+                                $lastName,
+                                $suffix,
+                                $lastName,
+                                $firstName,
+                                $suffix
+                            ]
+                        );
 
                         if (!$existing_check->fetchColumn()) {
-                            $sap_docnum = $validation_result['DocNum'] ?? null;
+                            if ($ticketCount > 0) {
 
-                            if ($sap_docnum !== null) {
-                                $conn->prepare("UPDATE [$table_name] SET SAPDocNum = ? WHERE id = ?")->execute([$sap_docnum, $docId]);
-                            }
+                                if ($firstName === $first_name && $lastName === $last_name) {
+                                    $exists_doc = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table] WHERE [DocNum] = ?");
+                                    $exists_doc->execute([$sap_docnum]);
 
-                            // ✅ Check cancel fields before inserting
-                            $cancel_sap_doc = trim($validation_result['CancelSISAPDoc'] ?? '');
-                            $cancel_si_no = trim($validation_result['CancelSINo'] ?? '');
-                            $cancel_si_date = trim($validation_result['CancelSIDate'] ?? '');
-
-                            if (($cancel_sap_doc !== '' || $cancel_si_no !== '' || $cancel_si_date !== '') && $cancel === 'N') {
-                                $doc_date = $validation_result['DocDate'] ?? '';
-                                $cancel_date = $validation_result['CancelSIDate'] ?? '';
-
-                                $insert_target = 'mismatch'; // default
-
-                                if ($doc_date !== '' && $cancel_date !== '') {
-                                    $doc_month = date('Y-m', strtotime($doc_date));
-                                    $cancel_month = date('Y-m', strtotime($cancel_date));
-
-                                    // Check if both are in the same month AND in June
-                                    if ($doc_month === $cancel_month && date('m', strtotime($cancel_date)) === '06') {
-                                        $insert_target = 'mismatch';
-                                    } else {
-                                        $insert_target = 'invalid_invoices';
-                                    }
-                                }
-
-                                if ($insert_target === 'mismatch') {
-                                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-                                    $exists_check->execute([$docId]);
-                                    if (!$exists_check->fetchColumn()) {
-                                        $mismatch_stmt->execute([
-                                            $docId,
-                                            $branch_val,
-                                            $first_name,
-                                            $last_name,
-                                            $suffix,
-                                            $inv_val,
-                                            $mobile_val,
-                                            $email_val,
-                                            'cancellation',
-                                            $postal_address,
-                                            $updated
-                                        ]);
+                                    if (!$exists_doc->fetchColumn()) {
+                                        for ($i = 0; $i < $ticketCount; $i++) {
+                                            $raffle_stmt->execute(
+                                                [
+                                                    $ticketCount,
+                                                    $cust_Id,
+                                                    $sap_docnum,
+                                                    $branch_val,
+                                                    $firstName,
+                                                    $lastName,
+                                                    $suffix,
+                                                    $inv_val,
+                                                    $total_amt,
+                                                    $mobile_val,
+                                                    $email_val,
+                                                    0,
+                                                    0
+                                                ]
+                                            );
+                                        }
+                                        $ticketed += $ticketCount;
+                                        $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$docId]);
                                     }
                                 } else {
-                                    $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
-                                    $exists_invalid->execute([$docId]);
-                                    if (!$exists_invalid->fetchColumn()) {
-                                        $invalid_invoice_stmt->execute([
-                                            $docId,
-                                            $branch_val,
-                                            $first_name,
-                                            $last_name,
-                                            $suffix,
-                                            $inv_val,
-                                            $mobile_val,
-                                            $email_val,
-                                            'cancellation',
-                                            $postal_address
-                                        ]);
+                                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
+                                    $exists_check->execute([$docId]);
+
+                                    if (!$exists_check->fetchColumn()) {
+                                        $mismatch_stmt->execute(
+                                            [
+                                                $docId,
+                                                $cust_Id,
+                                                $ticketCount,
+                                                $sap_docnum,
+                                                $branch_val,
+                                                $firstName,
+                                                $lastName,
+                                                $suffix,
+                                                $inv_val,
+                                                $total_amt,
+                                                $invName,
+                                                $docDate,
+                                                $mobile_val,
+                                                $email_val,
+                                                'Name mismatch',
+                                                $postal_address,
+                                                $updated
+                                            ]
+                                        );
+
+                                        $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
+                                        $exists_overall->execute([$docId]);
+
+                                        if (!$exists_overall->fetchColumn()) {
+                                            overall(
+                                                $overall,
+                                                $docId,
+                                                $branch_val,
+                                                $firstName,
+                                                $lastName,
+                                                $suffix,
+                                                $inv_val,
+                                                $mobile_val,
+                                                $email_val,
+                                                $postal_address,
+                                                $finding_type = 'Name mismatch'
+                                            );
+                                        }
+                                        $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
                                     }
-                                }
-
-                                $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                                $exists_overall->execute([$docId]);
-                                if (!$exists_overall->fetchColumn()) {
-                                    overall(
-                                        $overall,
-                                        $docId,
-                                        $branch_val,
-                                        $first_name,
-                                        $last_name,
-                                        $suffix,
-                                        $inv_val,
-                                        $mobile_val,
-                                        $email_val,
-                                        $postal_address,
-                                        'cancellation'
-                                    );
-                                }
-
-                                // $conn->prepare("UPDATE [$table_name] SET InValid = 'Y', Cancel = 'Y' WHERE id = ?")->execute([$docId]);
-                                $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
-                                continue; // ⛔ skip raffle insertion
-                            }
-
-                            // ✅ Proceed with ticket insertion if cancellation fields are empty
-                            $total_amt = (float) ($validation_result['TotalAmt'] ?? 0);
-                            $ticket_count = floor($total_amt / 5000);
-
-                            if ($ticket_count > 0) {
-                                // Check if this specific SAPDocNum already has entries
-                                $exists_doc = $conn->prepare("SELECT COUNT(*) FROM [$raffle_table] WHERE [DocNum] = ?");
-                                $exists_doc->execute([$sap_docnum]);
-
-                                if (!$exists_doc->fetchColumn()) {
-                                    for ($i = 0; $i < $ticket_count; $i++) {
-                                        $raffle_stmt->execute([
-                                            $ticket_count,
-                                            $cust_Id,
-                                            $sap_docnum,
-                                            $branch_val,
-                                            $first_name,
-                                            $last_name,
-                                            $suffix,
-                                            $inv_val,
-                                            $mobile_val,
-                                            $email_val,
-                                            $postal_address,
-                                            0,
-                                            0,
-                                        ]);
-                                    }
-
-                                    $ticketed += $ticket_count;
-                                    $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$docId]);
                                 }
                             }
                         }
                     }
                 }
-                $valid_match_found = true;
-            } else if (($validation_result['LastName'] === 'N' && $validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'N') ||
-                ($validation_result['LastName'] === 'N' && $validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'Y')
-            ) {
+                // NEXT --->>> BELOW 5K
+            } else {
+                if ($firstName === "" || $lastName === "" || $firstName === NULL || $lastName === NULL) {
+                    continue;
+                }
+
                 $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
                 $exists_invalid->execute([$docId]);
+
                 if (!$exists_invalid->fetchColumn()) {
-                    $invalid_invoice_stmt->execute([
-                        $docId,
-                        $branch_val,
-                        $first_name,
-                        $last_name,
-                        $suffix,
-                        $inv_val,
-                        $mobile_val,
-                        $email_val,
-                        'invoice or branch',
-                        $postal_address
-                    ]);
+                    $invalid_invoice_stmt->execute(
+                        [
+                            $docId,
+                            $branch_val,
+                            $firstName,
+                            $lastName,
+                            $suffix,
+                            $inv_val,
+                            $mobile_val,
+                            $email_val,
+                            '5K Below',
+                            $postal_address
+                        ]
+                    );
                 }
-                $valid_match_found = false;
 
                 $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
                 $exists_overall->execute([$docId]);
+
                 if (!$exists_overall->fetchColumn()) {
                     overall(
                         $overall,
                         $docId,
                         $branch_val,
-                        $first_name,
-                        $last_name,
+                        $firstName,
+                        $lastName,
                         $suffix,
                         $inv_val,
                         $mobile_val,
                         $email_val,
                         $postal_address,
-                        $finding_type = 'invoice or branch'
+                        $finding_type = '5K Below'
                     );
-                }
-                $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
-            } else if ($validation_result['LastName'] === 'Y') {
-                // Y - Y - N
-                if ($validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'N') {
-                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-                    $exists_check->execute([$docId]);
-
-                    if (!$exists_check->fetchColumn()) {
-                        $mismatch_stmt->execute([
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            'name',
-                            $postal_address,
-                            $updated
-                        ]);
-                    }
-                    $valid_match_found = false;
-
-                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                    $exists_overall->execute([$docId]);
-                    if (!$exists_overall->fetchColumn()) {
-                        overall(
-                            $overall,
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $postal_address,
-                            $finding_type = 'name'
-                        );
-                    }
-                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
-                } else if (($validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'N') || ($validation_result['FirstName'] === 'N' && $validation_result['Suffix'] === 'Y')) {
-                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-                    $exists_check->execute([$docId]);
-
-                    if (!$exists_check->fetchColumn()) {
-                        $mismatch_stmt->execute([
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            'name',
-                            $postal_address,
-                            $updated
-                        ]);
-                    }
-                    $valid_match_found = false;
-
-                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                    $exists_overall->execute([$docId]);
-                    if (!$exists_overall->fetchColumn()) {
-                        overall(
-                            $overall,
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $postal_address,
-                            $finding_type = 'name'
-                        );
-                    }
-                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
-                }
-            } else if ($validation_result['LastName'] === 'N') {
-                if (($validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'N') || ($validation_result['FirstName'] === 'Y' && $validation_result['Suffix'] === 'Y')) {
-                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-                    $exists_check->execute([$docId]);
-
-                    if (!$exists_check->fetchColumn()) {
-                        $mismatch_stmt->execute([
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            'name',
-                            $postal_address,
-                            $updated
-                        ]);
-                    }
-                    $valid_match_found = false;
-
-                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                    $exists_overall->execute([$docId]);
-                    if (!$exists_overall->fetchColumn()) {
-                        overall(
-                            $overall,
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $postal_address,
-                            $finding_type = 'name'
-                        );
-                    }
-                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
-                }
-            }
-        }
-
-        if (!$valid_match_found) {
-            // Check if this record is already in mismatch_table
-            $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
-            $exists_check->execute([$docId]);
-
-            // Step 1: If not in mismatch_table, then continue with insertions
-            if (!$exists_check->fetchColumn()) {
-                // Check if it's already inserted in invalid_invoices table
-                $exists_invalid = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
-                $exists_invalid->execute([$docId]);
-
-                // Step 2: If it's not already in invalid_invoices, then insert into the appropriate table
-                if (!$exists_invalid->fetchColumn()) {
-
-                    // Step 3: Determine finding type (either 'invoice or branch' or 'name')
-                    $finding_type = (count($results) === 0) ? 'invoice or branch' : 'name';
-
-                    // Step 4: Insert into ONLY one table (either mismatch or invalid_invoices)
-                    if ($finding_type === 'invoice or branch') {
-                        // Insert into invalid_invoices table
-                        $invalid_invoice_stmt->execute([
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $finding_type,
-                            $postal_address
-                        ]);
-                    } else {
-                        // Insert into mismatch table
-                        $mismatch_stmt->execute([
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $finding_type,
-                            $postal_address,
-                            $updated
-                        ]);
-                    }
-
-                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                    $exists_overall->execute([$docId]);
-                    if (!$exists_overall->fetchColumn()) {
-                        overall(
-                            $overall,
-                            $docId,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $mobile_val,
-                            $email_val,
-                            $postal_address,
-                            $finding_type
-                        );
-                    }
-
-                    // Mark this record as invalid in the main table
-                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
                 }
             }
         }

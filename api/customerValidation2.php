@@ -31,8 +31,8 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $raffle_stmt = $conn->prepare("INSERT INTO [$raffle_table] 
-        ([Counter], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [InvAmt], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Cancel], [Exported])
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        ([Counter], [DocNum], [Branch], [First_Name], [Last_Name], [Suffix], [Invoice_Number], [InvAmt], [Mobile_Number], [Email], [Postal_Address], [Excluded], [Cancel], [Exported], [Batch], [hasWon])
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     $ticketed = 0;
 
@@ -84,6 +84,8 @@ try {
                                 0,
                                 0,
                                 0,
+                                0,
+                                0
                             ]);
                         }
 

@@ -112,6 +112,87 @@
     </div>
   </div>
 
+  <!-- MISMATCH -->
+  <div
+    class="modal p-4 py-md-5 fade"
+    tabindex="-1"
+    role="dialog"
+    aria-hidden="true"
+    id="mismatch">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content rounded-3 shadow">
+        <div class="modal-body p-4" style="max-height: 700px">
+          <div class="d-flex">
+            <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-semibold text-center text-dark">MISMATCH</h5>
+            <button type="button" class="btn btn-success d-flex ms-auto" id="mismatchBtn">Export</button>
+          </div>
+          <div class="table-responsive" style="max-height: 500px">
+            <table class="table datatables" id="mismatchTable">
+              <thead>
+                <tr>
+                  <th class="text-center">#</th>
+                  <th class="text-center">DocNum</th>
+                  <th class="text-center">Branch</th>
+                  <th class="text-center">Invoice</th>
+                  <th class="text-center">Ticket</th>
+                  <th class="text-center">First Name</th>
+                  <th class="text-center">Last Name</th>
+                  <th class="text-center">Suffix</th>
+                  <th class="text-center">Reason</th>
+                  <!-- <th class="text-center">Action</th> -->
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+
+                try {
+                  $mismatch = $conn->prepare("EXEC DisplayMismatch");
+                  $mismatch->execute();
+
+                  $getMismatch = $mismatch->fetchAll(PDO::FETCH_OBJ);
+
+                  if ($getMismatch) {
+                    foreach ($getMismatch as $person) {
+
+                      echo '<tr>
+                      <td class="text-primary text-center">' . $person->id . '</td> 
+                      <td class="text-center text-danger fw-bold">' . $person->DocNum . '</td> 
+                      <td class="text-center text-primary fw-bold">' . $person->Branch . '</td> 
+                      <td class="text-center fw-bold text-success">' . $person->Invoice_Number . '</td>
+                      <td class="text-center fw-bold text-center"><span class="badge bg-danger">' . $person->TicketCount . '</span></td>
+                      <td class="text-center text-primary fw-bold">' . $person->First_Name . '</td>
+                      <td class="text-center fw-bold">' . $person->Last_Name . '</td>
+                      <td class="text-center">' . ($person->Suffix ?: '<span class="badge bg-danger">N/A</span>') . '</td>
+                      <td class="text-center fw-bold text-danger">' . $person->Findings . '</td>';
+                      // <td class="text-center">';
+
+                      // if ($person->Updated == 0) {
+                      //   echo '<button type="button" class="btn btn-sm bg-success-subtle border border-success proceed" data-inv="' . $person->Invoice_Number . '" data-branch="' . $person->Branch . '" title="Generate E-Ticket(s)"><i class="bi bi-check"></i></button>';
+                      // } else {
+                      //   echo '<button type="button" class="btn btn-sm bg-danger-subtle border border-danger exclude" data-inv="' . $person->Invoice_Number . '" data-branch="' . $person->Branch . '" title="Retrieve E-Ticket(s)"><i class="bi bi-x"></i></button>';
+                      // }
+
+                      // echo '</td>
+                      echo '</tr>';
+                    }
+                  }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
+                }
+
+                ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ADD USER -->
   <div
     class="modal p-4 py-md-5 fade"
@@ -552,15 +633,81 @@
     </div>
   </div>
 
+  <!-- INVALID INVOICE -->
+  <div
+    class="modal p-4 py-md-5 fade"
+    tabindex="-1"
+    role="dialog"
+    aria-hidden="true"
+    id="invalids">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div class="modal-content rounded-3 shadow">
+        <div class="modal-body p-4" style="max-height: 700px">
+          <div class="d-flex">
+            <h5 class="mb-0 fw-semibold text-center text-dark">INVALID INVOICES</h5>
+            <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <hr>
+          <div class="table-responsive" style="max-height: 500px">
+            <table class="table datatables" id="invalidsTable">
+              <thead>
+                <tr>
+                  <th class="text-center">BRANCH</th>
+                  <th>FIRST NAME</th>
+                  <th>LAST NAME</th>
+                  <th>SUFFIX</th>
+                  <th>INVOICE</th>
+                  <th class="text-center">MOBILE NUMBER</th>
+                  <th class="text-center">REASON</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+
+                try {
+                  $invalids = $conn->prepare("EXEC DisplayInvalids");
+                  $invalids->execute();
+
+                  $getInvalids = $invalids->fetchAll(PDO::FETCH_OBJ);
+
+                  if ($getInvalids) {
+                    foreach ($getInvalids as $user) {
+
+                      echo '<tr>
+                        <td class="text-primary text-center">' . $user->Branch . '</td> 
+                        <td class="text-primary fw-bold">' . $user->First_Name . '</td> 
+                        <td class="text-primary fw-bold">' . $user->Last_Name . '</td> 
+                        <td class="text-primary fw-bold text-center">' . $user->Suffix . '</td> 
+                        <td><span class="badge bg-success">' . $user->Invoice_Number . '</span></td>
+                        <td class="text-center">' . $user->Mobile_Number . '</td>
+                        <td class="text-primary fw-bold text-center">' . $user->Findings . '</td> 
+                      </tr>';
+                    }
+                  }
+                } catch (PDOException $e) {
+                  errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
+                }
+
+                ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="position-relative py-5">
     <h1 class="fw-bold text-center m-0 text-uppercase text-light">Administrator</h1>
     <div class="container mt-3 d-flex justify-content-center align-items-center gap-3">
       <button type="button" class="btn btn-sm btn bg-danger-subtle border border-danger text-dark" data-bs-toggle="modal" data-bs-target="#logout"><i class="bi bi-box-arrow-left"></i> <span class="d-none d-md-inline-block">Logout</span></button>
       <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#logs"><i class="bi bi-alarm-fill"></i> <span class="d-none d-md-inline-block">Logs</span></button>
       <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#addDept" title="Add Department"><i class="bi bi-people-fill"></i> <span class="d-none d-md-inline-block">Add Department</span></button>
+      <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#mismatch" title="Mismatch"><i class="bi bi-bell-fill"></i> <span class="d-none d-md-inline-block">Mismatch</span></button>
       <button type="button" class="btn btn-sm btn-light text-dark" data-bs-toggle="modal" data-bs-target="#update" title="Update Password"><i class="bi bi-pen"></i> <span class="d-none d-md-inline-block">Account</span></button>
       <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUser" title="Add User"><i class="bi bi-person-fill-add"></i> <span class="d-none d-md-inline-block">New User</span></button>
       <button type="button" class="btn btn-sm btn-info text-light" data-bs-toggle="modal" data-bs-target="#users"><i class="bi bi-person-gear"></i> <span class="d-none d-md-inline-block">Users</span></button>
+      <button type="button" class="btn btn-sm btn-danger text-light" data-bs-toggle="modal" data-bs-target="#invalids"><i class="bi bi-exclamation-triangle"></i> <span class="d-none d-md-inline-block">Invalid invoice</span></button>
       <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showWinners"><i class="bi bi-trophy-fill"></i> <span class="d-none d-md-inline-block">Winners</span></button>
     </div>
     <!-- TABLES -->
@@ -668,13 +815,15 @@
   <script src="js/include.js"></script>
   <script src="js/exclude.js"></script>
   <script src="js/update.js"></script>
+  <script src="js/proceed.js"></script>
+  <script src="js/retrieve.js"></script>
   <script>
     new DataTable('#employees');
     new DataTable('#customers');
     new DataTable('#logsTable');
     new DataTable('#winnerTable');
     new DataTable('#userAccessTable');
-
+    new DataTable('#mismatchTable');
 
     const deptSelect = document.getElementById('dept');
     const regionContainer = document.getElementById('region-container');
@@ -692,6 +841,82 @@
     if (deptSelect.value === 'ONLINE') {
       regionContainer.style.display = 'block';
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const mismatchBtn = document.getElementById("mismatchBtn");
+      const tableBody = document.querySelector("#mismatchTable tbody");
+
+      if (!mismatchBtn || !tableBody) {
+        return;
+      }
+
+      const rows = tableBody.querySelectorAll("tr");
+
+      let hasData = false;
+
+      rows.forEach(row => {
+
+        const cells = row.querySelectorAll("td");
+
+        if (
+          cells.length > 1 &&
+          !row.textContent.trim().includes("No matching records found")
+        ) {
+          hasData = true;
+        }
+      });
+
+      mismatchBtn.disabled = !hasData;
+    });
+
+    document.getElementById("mismatchBtn").addEventListener("click", () => {
+
+      const mismatchBtn = document.getElementById("mismatchBtn");
+      mismatchBtn.disabled = true
+
+      $.ajax({
+        type: "GET",
+        url: "functions/exportmismatch.php",
+        xhrFields: {
+          responseType: "blob"
+        },
+        success: function(data, status, xhr) {
+
+          const blob = new Blob([data], {
+            type: "text/csv"
+          });
+
+          const url = window.URL.createObjectURL(blob);
+
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "mismatch.csv";
+
+          document.body.appendChild(link);
+
+          link.click();
+
+          link.remove();
+
+          window.URL.revokeObjectURL(url);
+
+          Swal.fire({
+            icon: "success",
+            title: "Exported successfully",
+            confirmButtonText: "OK"
+          }).then(() => {
+            window.location.href = "dashboard.php"
+          })
+        },
+        error: function(xhr) {
+
+          console.error(xhr.responseText);
+
+          mismatchBtn.disabled = false;
+        }
+      });
+    });
   </script>
 </body>
 

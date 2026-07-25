@@ -171,7 +171,7 @@ try {
 
         $email = strtolower(trim($columns[6]));
 
-        $original_ref = "$original_branch | {$columns[5]} | " . mb_strtoupper("{$columns[2]} {$columns[3]}", 'UTF-8');
+        $original_ref = "$original_branch | $columns[4] | {$columns[5]} | " . mb_strtoupper("{$columns[2]} {$columns[3]}", 'UTF-8');
 
 
         $checkStmt = $conn->prepare("SELECT COUNT(*) FROM responses WHERE Ref = :ref");
