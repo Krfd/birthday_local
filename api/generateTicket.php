@@ -144,7 +144,8 @@ try {
     // VALIDATION
     $validation = $conn->prepare("EXEC Validation ?,?");
     // EMPLOYEE VALIDATION
-    $employee_check_stmt = $conn->prepare("SELECT TOP 1 * FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
+    // $employee_check_stmt = $conn->prepare("SELECT 1 FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
+    $employee_check_stmt = $conn->prepare("SELECT * FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
 
     $ticketed = 0;
 
@@ -173,8 +174,6 @@ try {
 
         $updated = 0;
 
-        // $validation_proc = $conn->prepare("EXEC CustomerValidation1 ?,?,?,?,?");
-
         $validation->execute([$inv_val, $branch_val]);
 
         $results = [];
@@ -193,12 +192,68 @@ try {
             $invName = $validation_result['Last_Name'] . ' ' . $validation_result['First_Name'];
             $docDate = $validation_result['DocDate'] ?? null;
 
-            $employee_check_stmt->execute([$firstName, $lastName]);
-            $is_employee = $employee_check_stmt->fetchColumn();
+            $employee_check_stmt->execute([$first_name, $last_name]);
+            // $is_employee = $employee_check_stmt->fetchColumn();
+            $is_employee = $employee_check_stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($total_amt >= 5000) {
                 if ($is_employee) {
-                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = :id")->execute([$docId]);
+                    // if ($is_employee !== false) {
+                    // $log = sprintf(
+                    //     "[%s] first_name='%s', last_name='%s', is_employee=%s\n",
+                    //     date('Y-m-d H:i:s'),
+                    //     $first_name,
+                    //     $last_name,
+                    //     var_export($is_employee, true)
+                    // );
+
+                    // file_put_contents('employee_debug.txt', $log, FILE_APPEND);
+                    $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
+
+                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
+                    $exists_overall->execute([$docId]);
+
+                    if (!$exists_overall->fetchColumn()) {
+                        overall(
+                            $overall,
+                            $docId,
+                            $branch_val,
+                            $first_name,
+                            $last_name,
+                            $suffix,
+                            $inv_val,
+                            $mobile_val,
+                            $email_val,
+                            $postal_address,
+                            $finding_type = 'employee'
+                        );
+                    }
+
+                    $exists_check = $conn->prepare("SELECT COUNT(*) FROM invalid_invoices WHERE docId = ?");
+                    $exists_check->execute([$docId]);
+
+                    if (!$exists_check->fetchColumn()) {
+                        $mismatch_stmt->execute([
+                            $docId,
+                            $cust_Id,
+                            $ticketCount,
+                            $sap_docnum,
+                            $branch_val,
+                            $first_name,
+                            $last_name,
+                            $suffix,
+                            $inv_val,
+                            $total_amt,
+                            $invName,
+                            $docDate,
+                            $mobile_val,
+                            $email_val,
+                            'employee',
+                            $postal_address,
+                            $updated
+                        ]);
+                    }
+
                     continue;
                 } else {
                     // 100K UP
@@ -214,8 +269,10 @@ try {
                                     $ticketCount,
                                     $sap_docnum,
                                     $branch_val,
-                                    $firstName,
-                                    $lastName,
+                                    // $firstName,
+                                    // $lastName,
+                                    $first_name,
+                                    $last_name,
                                     $suffix,
                                     $inv_val,
                                     $total_amt,
@@ -237,8 +294,10 @@ try {
                                     $overall,
                                     $docId,
                                     $branch_val,
-                                    $firstName,
-                                    $lastName,
+                                    // $firstName,
+                                    // $lastName,
+                                    $first_name,
+                                    $last_name,
                                     $suffix,
                                     $inv_val,
                                     $mobile_val,
@@ -254,8 +313,10 @@ try {
                             [
                                 $branch_val,
                                 $inv_val,
-                                $firstName,
-                                $lastName,
+                                // $firstName,
+                                // $lastName,
+                                $first_name,
+                                $last_name,
                                 $suffix,
                                 $lastName,
                                 $firstName,
@@ -291,7 +352,7 @@ try {
                                             );
                                         }
                                         $ticketed += $ticketCount;
-                                        $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$docId]);
+                                        $conn->prepare("UPDATE [$table_name] SET InvAmt = ?, SAPDocNum = ?, Validated = 'Y' WHERE id = ?")->execute([$docId, $sap_docnum, $total_amt]);
                                     }
                                 } else {
                                     $exists_check = $conn->prepare("SELECT COUNT(*) FROM [$mismatch_table] WHERE docId = ?");
@@ -305,8 +366,8 @@ try {
                                                 $ticketCount,
                                                 $sap_docnum,
                                                 $branch_val,
-                                                $firstName,
-                                                $lastName,
+                                                $first_name,
+                                                $last_name,
                                                 $suffix,
                                                 $inv_val,
                                                 $total_amt,
@@ -328,8 +389,8 @@ try {
                                                 $overall,
                                                 $docId,
                                                 $branch_val,
-                                                $firstName,
-                                                $lastName,
+                                                $first_name,
+                                                $last_name,
                                                 $suffix,
                                                 $inv_val,
                                                 $mobile_val,
@@ -359,8 +420,10 @@ try {
                         [
                             $docId,
                             $branch_val,
-                            $firstName,
-                            $lastName,
+                            // $firstName,
+                            // $lastName,
+                            $first_name,
+                            $last_name,
                             $suffix,
                             $inv_val,
                             $mobile_val,
@@ -379,8 +442,10 @@ try {
                         $overall,
                         $docId,
                         $branch_val,
-                        $firstName,
-                        $lastName,
+                        // $firstName,
+                        // $lastName,
+                        $first_name,
+                        $last_name,
                         $suffix,
                         $inv_val,
                         $mobile_val,

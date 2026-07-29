@@ -27,12 +27,21 @@ try {
         $winnerArea = $data['region'];
         $winnerCategory = $data['category'];
         $winnerPrize = $data['prize'];
+        $winnerBranch = $data['branch'];
+
+        // $file = 'customer_details.txt';
+
+        // file_put_contents(
+        //     $file,
+        //     $cust_id . ' - ' . $winnerBranch . PHP_EOL,
+        //     FILE_APPEND | LOCK_EX
+        // );
 
         $updateCustId = $conn->prepare("EXEC UpdateCustId ?");
         $updateCustId->execute([$cust_id]);
 
-        $ins_winner = $conn->prepare("EXEC insertWinner ?,?,?,?,?");
-        $ins_winner->execute([$winnerName, $winnerTicket, $winnerArea, $winnerCategory, $winnerPrize]);
+        $ins_winner = $conn->prepare("EXEC insertWinner ?,?,?,?,?,?");
+        $ins_winner->execute([$winnerName, $winnerTicket, $winnerBranch, $winnerArea, $winnerCategory, $winnerPrize]);
 
         echo json_encode(["status" => "success", "message" => "Winner details submitted"]);
     } else {

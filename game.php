@@ -6,8 +6,8 @@
 <head>
   <meta charset="UTF-8" />
 
-  <title>The Greatest Anniversary Appliance giveaway</title>
-  <link rel="icon" href="assets/img/logo.jpg" />
+  <title>The Greatest Anniversary Appliance Giveaway</title>
+  <link rel="icon" href="assets/img/logo.png" />
   <link rel="stylesheet" href="css/bootstrap.min.css" />
   <style>
     * {
@@ -181,7 +181,7 @@
 </head>
 
 <body>
-  <div class="container mt-5 pt-3">
+  <div class="container-fluid mt-5 pt-3 p-5">
     <div class="mt-5 pt-5">
       <div id="invoice-display" class="mt-5 pt-5">
         <h2 class="pt-5" style="font-size: clamp(1.5rem, 5vw, 5rem); text-align: center;">
@@ -197,7 +197,6 @@
     </div>
     <div class="mt-5">
       <h2 style="font-size: clamp(1.5rem, 5vw, 5rem); text-align: center;">
-        <!-- <span class="fw-bold font" data-text="WINNER">WINNER</span> -->
         <span class="fw-bold font" id="category"></span>
       </h2>
       <div id="winner-display" class="font" aria-live="assertive">
@@ -221,7 +220,7 @@
     let currentRegion = "";
     let currentCategory = "";
     let currentPrize = "";
-    let cust_Id = 0;
+    let cust_Id;
 
     let lastStatus = null;
 
@@ -267,14 +266,21 @@
           .map((u) => ({
             customerName: u.customerName,
             ticketNumbers: u.ticketNumbers,
-            cust_id: u.cust_id
+            cust_id: u.cust_id,
+            branch: u.branch
           }));
 
+        // users = data
+        //   .filter((u) => !excludedCustomerNames.has(u.customerName))
+        //   .map((u) => ({
+        //     customerName: u.customerName,
+        //     ticketNumbers: u.ticketNumbers,
+        //     cust_id: u.cust_id
+        //   }));
         console.log("PROCESSED USERS:", users);
 
         invoices = users.flatMap((user) => user.ticketNumbers.map(String));
         names = users.map((user) => user.customerName);
-        cust_id = users.map((id) => id.cust_id)
 
         return fetch("sync.php");
       })
@@ -318,11 +324,10 @@
       finalInvoice = "";
       const categoryDisplay = document.getElementById("category")
       if (currentCategory !== "Grand Prize") {
-        categoryDisplay.innerHTML = `<strong data-text="${currentCategory} Prize" class="winnerFont">${currentCategory} Prize</strong>`;
+        categoryDisplay.innerHTML = `<strong data-text="${currentCategory} Prize" class="winnerFont text-uppercase">${currentCategory} Prize</strong>`;
       } else {
-        categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory}</strong>`;
+        categoryDisplay.innerHTML = `<strong data-text="${currentCategory} - ${currentRegion}" class="winnerFont text-uppercase">${currentCategory} - ${currentRegion}</strong>`;
       }
-      // categoryDisplay.innerHTML = `<strong data-text="${currentCategory}" class="winnerFont">${currentCategory}</strong>`;
 
       const availableInvoices = invoices.filter((ticket) => {
         const user = users.find((u) =>
@@ -336,7 +341,6 @@
       });
 
       if (availableInvoices.length === 0) {
-        // document.getElementById("winner-display").innerHTML = `<strong data-text="Unknown" class="winnerFont">Unknown</strong>`;
         isRolling = false;
         hasStarted = false;
         finalInvoice = "";
@@ -396,9 +400,17 @@
       function rollNextDigit() {
         const digits = document.querySelectorAll("#invoice-display .digit");
         const digitCount = digits.length;
-        const totalRolls = 20;
+        // const totalRolls = 20;
+        const totalRolls = 15;
         const isGrandPrize = currentCategory === "Grand Prize";
-        const totalDuration = isGrandPrize ? 5000 : 3000; // ms
+        console.log(`CURRENT CATEGORY: ${currentCategory}`)
+        // const totalDuration = isGrandPrize ? 5000 : 3000;
+        const totalDuration =
+          isGrandPrize ?
+          5000 :
+          currentCategory === "Consolation" ?
+          2000 :
+          3000;
         const perDigitDuration = totalDuration / digitCount;
         const intervalDelay = perDigitDuration / totalRolls;
 
@@ -445,10 +457,9 @@
         rollSingleDigit(order[0]);
       }
       rollNextDigit();
-      // console.log(`UPDATED RANDOMIZER`)
     }
 
-    function submitWinnerDetails(winnerName, winnerTicket, cust_id) {
+    function submitWinnerDetails(winnerName, winnerTicket, cust_id, winnerBranch) {
       console.log(
         `Submitting winner details: ${cust_id} ${winnerName} - ${winnerTicket} - ${currentRegion} - ${currentCategory} - ${currentPrize}`,
       );
@@ -465,6 +476,7 @@
             region: currentRegion,
             category: currentCategory,
             prize: currentPrize,
+            branch: winnerBranch
           }),
         })
         .then(async (response) => {
@@ -493,13 +505,25 @@
       const winnerUser = users.find((user) =>
         user.ticketNumbers.map(String).includes(String(winnerTicket)),
       );
+      // const winnerTicket = String(finalInvoice);
 
-      let winnerName = winnerUser ? winnerUser.customerName : "Unknown";
+      // const winnerUser = users.find((user) =>
+      //   user.ticketNumbers
+      //   .map(String)
+      //   .includes(winnerTicket)
+      // );
+
+      let winnerName = winnerUser ? winnerUser.customerName : "";
+      winnerName = winnerName
+        .toLowerCase()
+        .split(" ")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
       let winnerCustId = null;
+      let winnerBranch = null
 
-      if (!winnerName || winnerName === "Unknown") {
+      if (!winnerName || winnerName === "") {
         console.error("Error: Winner's name is undefined or invalid.");
-        // winnerName = "Unknown"; // Default to "Unknown" to avoid crashing
       }
 
       // UPDATES THE SET IN MEMORY TO SURE:
@@ -513,22 +537,25 @@
         excludedCustomerNames.add(winnerUser.customerName);
 
         winnerCustId = winnerUser.cust_id
+        winnerBranch = winnerUser.branch
 
         users = users.filter((u) => u.customerName !== winnerUser.customerName);
+        // users = users.filter(
+        //   (user) => user.cust_id !== winnerCustId
+        // );
         invoices = invoices.filter(
           (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket)),
         );
-        names = users.map((u) => u.customerName); // Make sure names are updated
-        // cust_id = users.map((id) => id.cust_id)
+        names = users.map((u) => u.customerName);
       }
       console.log(`UPDATED CUSTOMER ID: ${winnerCustId}`)
+      console.log(`UPDATED CUSTOMER BRANCH: ${winnerBranch}`)
 
       const winnerDisplay = document.getElementById("winner-display");
 
       winnerDisplay.innerHTML = `<strong data-text="${winnerName}" class="winnerFont">${winnerName}</strong>`; // Final winner name
       showConfetti(winnerName, winnerTicket);
-      // submitWinnerDetails(winnerName, winnerTicket, cust_id);
-      submitWinnerDetails(winnerName, winnerTicket, winnerCustId);
+      submitWinnerDetails(winnerName, winnerTicket, winnerCustId, winnerBranch);
     }
 
     function showConfetti(winnerName, winnerTicket) {
@@ -541,22 +568,71 @@
         colors;
 
       (function frame() {
+
+        // confetti({
+        //   particleCount: 8,
+        //   angle: 60,
+        //   spread: 60,
+        //   origin: {
+        //     x: 0
+        //   },
+        //   colors: confettiColors,
+        // });
+
+        // confetti({
+        //   particleCount: 8,
+        //   angle: 120,
+        //   spread: 60,
+        //   origin: {
+        //     x: 1
+        //   },
+        //   colors: confettiColors,
+        // });
+
+        // Right
         confetti({
-          particleCount: 8,
-          angle: 60,
-          spread: 60,
+          particleCount: 6,
+          angle: 120,
+          spread: 70,
           origin: {
-            x: 0
+            x: 1,
+            y: 0.6
           },
           colors: confettiColors,
         });
 
+        // Top Left
         confetti({
-          particleCount: 8,
-          angle: 120,
-          spread: 60,
+          particleCount: 5,
+          angle: 45,
+          spread: 55,
           origin: {
-            x: 1
+            x: 0.15,
+            y: 0
+          },
+          colors: confettiColors,
+        });
+
+        // Top Right
+        confetti({
+          particleCount: 5,
+          angle: 135,
+          spread: 55,
+          origin: {
+            x: 0.85,
+            y: 0
+          },
+          colors: confettiColors,
+        });
+
+        // Top Center (falls downward)
+        confetti({
+          particleCount: 10,
+          angle: 90,
+          spread: 120,
+          origin: {
+            x: 0.5,
+            y: 0
           },
           colors: confettiColors,
         });
@@ -585,6 +661,7 @@
               region: currentRegion,
               category: currentCategory,
               prize: currentPrize,
+              // branch: currentBranch,
             }),
           });
         }

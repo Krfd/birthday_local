@@ -10,7 +10,7 @@ try {
 
     // Set CSV headers
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="customer_entries.csv"');
+    header('Content-Disposition: attachment; filename="anniversaya_entries.csv"');
 
     // Open output stream
     $output = fopen('php://output', 'w');

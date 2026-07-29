@@ -52,8 +52,8 @@ try {
                 $placeholders = implode(',', array_fill(0, count($branches), '?'));
 
                 $insertSql = "INSERT INTO current_entries 
-                (Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported)
-                SELECT Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported
+                (Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported, hasWon)
+                SELECT Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported, hasWon
                 FROM raffle_entries
                 WHERE Branch IN ($placeholders)";
 
@@ -67,8 +67,8 @@ try {
             }
         }
 
-        $file = 'branches.txt';
-        file_put_contents($file, implode(PHP_EOL, $branches));
+        // $file = 'branches.txt';
+        // file_put_contents($file, implode(PHP_EOL, $branches));
 
         echo json_encode($prize ?: []);
     } else {

@@ -7,7 +7,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?php echo $user_name ?></title>
-    <link rel="icon" href="assets/img/logo.jpg" />
+    <link rel="icon" href="assets/img/logo.png" />
     <link rel="stylesheet" href="css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/vendor/bootstrap-icons.css" />
     <link rel="stylesheet" href="js/datatables/dataTables.css" />

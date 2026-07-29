@@ -60,8 +60,6 @@ try {
 
     if ($decrypted_data === false) die("❌ Error fetching decrypted data.");
 
-    // echo "✅ Decrypted data fetched successfully!\n";
-
     $rows = str_getcsv($decrypted_data, "\n");
 
     array_shift($rows);
@@ -71,21 +69,26 @@ try {
         'BACOLOD - MANDALAGAN' => 'BACOLOD DOS',
         'BUTUAN - M. CALO' => 'BUTUAN',
         'BUTUAN - JC AQUINO' => 'BUTUAN DOS',
-        'GENSAN' => 'GENERAL SANTOS',
+        // 'GENSAN' => 'GENERAL SANTOS',
+        'KALIBO - REGALADO' => 'KALIBO',
+        'KALIBO - ANDAGAO' => 'KALIBO DOS',
+        'LAGAO GENERAL SANTOS' => 'LAGAO',
         'LUCENA - BAYAN' => 'LUCENA',
         'LUCENA - IBABANG DUPAY' => 'LUCENA DOS',
         'MEGA SHOWROOM' => 'SHOWROOM',
+        'OZAMIZ' => 'OZAMIS',
         'PLAZA - DELGADO' => 'PLAZA',
         'ROXAS - ROXAS AVENUE' => 'ROXAS',
         'ROXAS - LAWA-AN' => 'ROXAS DOS',
         'ROXAS MINDORO' => 'ORMIN ROXAS',
-        'SAN PEDRO PALAWAN' => 'SNPEDRO PALAWAN',
+        'SAN PEDRO - LAGUNA' => 'SAN PEDRO',
+        'SAN PEDRO - PALAWAN' => 'SNPEDRO PALAWAN',
         'TAGUM - QUEZON' => 'TAGUM',
         'TAGUM - BONIFACIO' => 'TAGUM DOS',
-        'ZAMBOANGA - TETUAN' => 'ZAMBOANGA',
-        'ZAMBOANGA - PUTIK' => 'ZAMBOANGA DOS',
         'BAYBAY LEYTE' => 'BAYBAY',
-        'SILANG CAVITE' => 'SILANG'
+        'SILANG CAVITE' => 'SILANG',
+        'ZAMBOANGA - PUTIK' => 'ZAMBOANGA',
+        'ZAMBOANGA - VETERANS' => 'ZAMBOANGA DOS'
     ];
 
     // $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?,?,?,?");

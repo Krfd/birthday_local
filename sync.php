@@ -33,6 +33,9 @@
         if (isset($decoded['prize'])) {
             $existing['prize'] = $decoded['prize'];
         }
+        if (isset($decoded['branch'])) {
+            $existing['branch'] = $decoded['branch'];
+        }
 
         $allowedKeys = ["status", "finalInvoice", "excludedTicketNumbers", "excludedCustomerNames"];
 
@@ -62,6 +65,7 @@
             "excludedCustomerNames" => [],
             "region" => "",
             "category" => "",
-            "prize" => ""
+            "prize" => "",
+            "branch" => ""
         ]);
     }

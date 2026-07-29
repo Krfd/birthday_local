@@ -11,7 +11,7 @@ $qrImage = "https://api.qrserver.com/v1/create-qr-code/?data=" . urlencode($url)
 
 <head>
     <title>The Greatest Anniversary Appliance giveaway</title>
-    <link rel="icon" href="assets/img/logo.jpg" />
+    <link rel="icon" href="assets/img/logo.png" />
     <link rel="stylesheet" href="css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/vendor/bootstrap-icons.css" />
     <style>

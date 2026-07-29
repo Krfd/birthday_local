@@ -6,15 +6,18 @@ try {
     $stmt = $conn->prepare("SELECT 
             docId,
             cust_Id,
+            TicketCount,
             DocNum,
             Branch,
-            Invoice_Number,
             First_Name,
             Last_Name,
+            Invoice_Number,
             Suffix,
             InvAmt,
             InvName,
-            InvDate
+            InvDate,
+            Mobile_Number,
+            Email
         FROM mismatch
         WHERE Exported IS NULL OR Exported = 0
         ORDER BY id ASC");
@@ -25,9 +28,17 @@ try {
         die("No mismatch records available for export.");
     }
 
+    $stmtBatch = $conn->query("SELECT COALESCE(MAX(Batch), 100000) + 1 AS NextBatch
+        FROM mismatch
+        WHERE Batch IS NOT NULL AND Exported = 0
+    ");
+
+    $batchNo = $stmtBatch->fetch(PDO::FETCH_ASSOC)['NextBatch'];
+
     // Set CSV headers
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="mismatch.csv"');
+    // header('Content-Disposition: attachment; filename="batch.csv"');
+    header("Content-Disposition: attachment; filename=\"batch_{$batchNo}.csv\"");
 
     // Open output stream
     $output = fopen('php://output', 'w');
@@ -37,52 +48,79 @@ try {
     // Write CSV headers
     // fwrite($output, "Branch,Invoice,First Name,Last Name,Suffix\n");
     fputcsv($output, [
-        'DocId',
-        'CustomerId',
+        'Batch',
+        'docId',
+        'counter',
+        'cust_Id',
         'DocNum',
         'Branch',
-        'Invoice',
-        'FirstName',
-        'LastName',
+        'First_Name',
+        'Last_Name',
         'Suffix',
-        'InvoiceAmt',
+        'Invoice_Number',
+        'InvAmt',
         'InvoiceName',
-        'InvoiceDate'
+        'InvoiceDate',
+        'Mobile_Number',
+        'Email',
+        'Validated',
+        'Invalid'
     ]);
 
     $entryIdsToUpdate = [];
 
     foreach ($entries as $entry) {
         fputcsv($output, [
+            $batchNo,
             $entry->docId,
+            $entry->TicketCount,
             $entry->cust_Id,
             $entry->DocNum,
             $entry->Branch,
-            $entry->Invoice_Number,
             $entry->First_Name,
             $entry->Last_Name,
             $entry->Suffix,
+            $entry->Invoice_Number,
             $entry->InvAmt,
             $entry->InvName,
-            $entry->InvDate
+            $entry->InvDate,
+            $entry->Mobile_Number,
+            $entry->Email,
+            0,
+            0
         ]);
 
         $entryIdsToUpdate[] = $entry->Invoice_Number;
     }
     fclose($output);
 
+    // if (!empty($entryIdsToUpdate)) {
+    //     $placeholders = implode(
+    //         ',',
+    //         array_fill(0, count($entryIdsToUpdate), '?')
+    //     );
+
+    //     $updateStmt = $conn->prepare("UPDATE mismatch
+    //         SET Exported = 1,
+    //         WHERE Invoice_Number IN ($placeholders)
+    //     ");
+    //     $updateStmt->execute($entryIdsToUpdate);
+    // }
+
     if (!empty($entryIdsToUpdate)) {
-        $placeholders = implode(
-            ',',
-            array_fill(0, count($entryIdsToUpdate), '?')
-        );
 
-        $updateStmt = $conn->prepare("UPDATE mismatch
-            SET Exported = 1
-            WHERE Invoice_Number IN ($placeholders)
-        ");
+        $placeholders = implode(',', array_fill(0, count($entryIdsToUpdate), '?'));
 
-        $updateStmt->execute($entryIdsToUpdate);
+        $sql = "UPDATE mismatch
+        SET Exported = 1,
+            Batch = ?
+        WHERE Invoice_Number IN ($placeholders)";
+
+        $updateStmt = $conn->prepare($sql);
+
+        $params = array_merge([$batchNo], $entryIdsToUpdate);
+
+        $updateStmt->execute($params);
     }
 
     exit();

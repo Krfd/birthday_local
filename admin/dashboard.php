@@ -7,7 +7,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Administrator</title>
-  <link rel="icon" href="../assets/img/logo.jpg" />
+  <link rel="icon" href="../assets/img/logo.png" />
   <link rel="stylesheet" href="../css/bootstrap.min.css" />
   <link rel="stylesheet" href="../css/vendor/bootstrap-icons.css" />
   <link rel="stylesheet" href="../js/datatables/dataTables.css" />
@@ -128,7 +128,10 @@
           <hr>
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-semibold text-center text-dark">MISMATCH</h5>
-            <button type="button" class="btn btn-success d-flex ms-auto" id="mismatchBtn">Export</button>
+            <div class="d-flex gap-1">
+              <button type="button" class="btn btn-success" id="mismatchBtn">Export</button>
+              <button type="button" class="btn btn-dark" id="appendTicketsBtn">Migrate</button>
+            </div>
           </div>
           <div class="table-responsive" style="max-height: 500px">
             <table class="table datatables" id="mismatchTable">
@@ -816,7 +819,7 @@
   <script src="js/exclude.js"></script>
   <script src="js/update.js"></script>
   <script src="js/proceed.js"></script>
-  <script src="js/retrieve.js"></script>
+  <!-- <script src="js/retrieve.js"></script> -->
   <script>
     new DataTable('#employees');
     new DataTable('#customers');
@@ -891,14 +894,30 @@
           const link = document.createElement("a");
 
           link.href = url;
-          link.download = "mismatch.csv";
+          // link.download = "mismatch.csv";
+
+          // document.body.appendChild(link);
+
+          // link.click();
+
+          // link.remove();
+
+          // window.URL.revokeObjectURL(url);
+          const disposition = xhr.getResponseHeader("Content-Disposition");
+          let filename = "batch.csv";
+
+          if (disposition && disposition.includes("filename=")) {
+            filename = disposition
+              .split("filename=")[1]
+              .replace(/"/g, "");
+          }
+
+          link.download = filename;
 
           document.body.appendChild(link);
-
           link.click();
 
           link.remove();
-
           window.URL.revokeObjectURL(url);
 
           Swal.fire({
@@ -914,6 +933,50 @@
           console.error(xhr.responseText);
 
           mismatchBtn.disabled = false;
+        }
+      });
+    });
+
+    // MIGRATE RECYCLE DATA
+    document.getElementById("appendTicketsBtn").addEventListener("click", () => {
+
+      const recycleBtn = document.getElementById("appendTicketsBtn");
+      recycleBtn.disabled = true
+
+      $.ajax({
+        type: "GET",
+        url: "functions/appendRaffleTickets.php",
+        dataType: "json",
+        success: function(response) {
+          if (response.isSuccess == "success") {
+            Swal.fire({
+              icon: "success",
+              title: "Migration completed",
+              confirmButtonText: "OK"
+            }).then(() => {
+              location.reload();
+            })
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Migration failed",
+              text: response.message || "No success response received."
+            });
+
+            recycleBtn.disabled = false;
+          }
+        },
+        error: function(xhr) {
+          console.error("AJAX Error:", status, error);
+          console.error("Response:", xhr.responseText);
+
+          Swal.fire({
+            icon: "error",
+            title: "Migration failed",
+            text: "An error occurred while migrating the recycle data."
+          });
+
+          recycleBtn.disabled = false;
         }
       });
     });

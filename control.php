@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Control Panel</title>
-  <link rel="icon" href="assets/img/logo.jpg" />
+  <link rel="icon" href="assets/img/logo.png" />
   <link rel="stylesheet" href="css/bootstrap.min.css" />
   <link rel="stylesheet" href="js/datatables/dataTables.css" />
   <link rel="stylesheet" href="css/vendor/bootstrap-icons.css" />
@@ -168,6 +168,7 @@
                 <th>#</th>
                 <th>E-Ticket</th>
                 <th>CUSTOMER</th>
+                <th>BRANCH</th>
                 <th>AREA</th>
                 <th>CATEGORY</th>
                 <th>PRIZE</th>
@@ -345,7 +346,8 @@
         winnerTable.row.add([
           `<span class="d-inline-block rounded-5 bg-info-subtle text-primary-emphasis p-2 fw-bold border border-primary text-center" style="width:40px;max-width:40px;">${counter++}</span>`,
           `<span class="fw-bold text-primary text-center">${winner.winningTicket}</span>`,
-          `<span class="fw-bold text-center">${winner.winner}</span>`,
+          `<span class="fw-bold text-center text-uppercase">${winner.winner}</span>`,
+          `<span class="text-center">${winner.branch}</span>`,
           `<span class="text-center">${winner.area}</span>`,
           `<span class="badge ${categoryBg} ${categoryText}">${winner.category}</span>`,
           `<span class="badge bg-success">${winner.prize}</span>
