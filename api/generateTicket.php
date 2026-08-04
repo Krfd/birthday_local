@@ -53,7 +53,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $table_name = 'responses';
-    $raffle_table = 'raffle_entries';
+    $raffle_table = 'raffle_entries1';
     $mismatch_table = 'mismatch';
     $overall_findings_table = 'overall_findings';
 
@@ -144,8 +144,7 @@ try {
     // VALIDATION
     $validation = $conn->prepare("EXEC Validation ?,?");
     // EMPLOYEE VALIDATION
-    // $employee_check_stmt = $conn->prepare("SELECT 1 FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
-    $employee_check_stmt = $conn->prepare("SELECT * FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
+    $employee_check_stmt = $conn->prepare("SELECT TOP 1 * FROM employees WHERE LOWER(LTRIM(RTRIM(first_name))) = LOWER(LTRIM(RTRIM(?))) AND LOWER(LTRIM(RTRIM(last_name))) = LOWER(LTRIM(RTRIM(?)))");
 
     $ticketed = 0;
 
@@ -182,6 +181,14 @@ try {
 
         $valid_match_found = false;
 
+        $existsStmt = $conn->prepare("SELECT 1 FROM [$overall_findings_table] WHERE docId = ?");
+
+        $existsStmt->execute([$docId]);
+
+        if ($existsStmt->fetchColumn()) {
+            continue;
+        }
+
         foreach ($results as $validation_result) {
 
             $total_amt = (float) ($validation_result['InvAmt'] ?? null);
@@ -193,21 +200,10 @@ try {
             $docDate = $validation_result['DocDate'] ?? null;
 
             $employee_check_stmt->execute([$first_name, $last_name]);
-            // $is_employee = $employee_check_stmt->fetchColumn();
             $is_employee = $employee_check_stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($total_amt >= 5000) {
                 if ($is_employee) {
-                    // if ($is_employee !== false) {
-                    // $log = sprintf(
-                    //     "[%s] first_name='%s', last_name='%s', is_employee=%s\n",
-                    //     date('Y-m-d H:i:s'),
-                    //     $first_name,
-                    //     $last_name,
-                    //     var_export($is_employee, true)
-                    // );
-
-                    // file_put_contents('employee_debug.txt', $log, FILE_APPEND);
                     $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
 
                     $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
@@ -233,25 +229,20 @@ try {
                     $exists_check->execute([$docId]);
 
                     if (!$exists_check->fetchColumn()) {
-                        $mismatch_stmt->execute([
-                            $docId,
-                            $cust_Id,
-                            $ticketCount,
-                            $sap_docnum,
-                            $branch_val,
-                            $first_name,
-                            $last_name,
-                            $suffix,
-                            $inv_val,
-                            $total_amt,
-                            $invName,
-                            $docDate,
-                            $mobile_val,
-                            $email_val,
-                            'employee',
-                            $postal_address,
-                            $updated
-                        ]);
+                        $invalid_invoice_stmt->execute(
+                            [
+                                $docId,
+                                $branch_val,
+                                $first_name,
+                                $last_name,
+                                $suffix,
+                                $inv_val,
+                                $mobile_val,
+                                $email_val,
+                                'employee',
+                                $postal_address
+                            ]
+                        );
                     }
 
                     continue;
@@ -269,8 +260,6 @@ try {
                                     $ticketCount,
                                     $sap_docnum,
                                     $branch_val,
-                                    // $firstName,
-                                    // $lastName,
                                     $first_name,
                                     $last_name,
                                     $suffix,
@@ -280,7 +269,7 @@ try {
                                     $docDate,
                                     $mobile_val,
                                     $email_val,
-                                    '100K up',
+                                    '100K up', // REASON
                                     $postal_address,
                                     $updated
                                 ]
@@ -294,8 +283,6 @@ try {
                                     $overall,
                                     $docId,
                                     $branch_val,
-                                    // $firstName,
-                                    // $lastName,
                                     $first_name,
                                     $last_name,
                                     $suffix,
@@ -303,7 +290,7 @@ try {
                                     $mobile_val,
                                     $email_val,
                                     $postal_address,
-                                    $finding_type = '100K up'
+                                    $finding_type = '100K up' // REASON
                                 );
                             }
                             $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
@@ -313,8 +300,6 @@ try {
                             [
                                 $branch_val,
                                 $inv_val,
-                                // $firstName,
-                                // $lastName,
                                 $first_name,
                                 $last_name,
                                 $suffix,
@@ -375,7 +360,7 @@ try {
                                                 $docDate,
                                                 $mobile_val,
                                                 $email_val,
-                                                'Name mismatch',
+                                                'Name mismatch', // REASON
                                                 $postal_address,
                                                 $updated
                                             ]
@@ -396,7 +381,7 @@ try {
                                                 $mobile_val,
                                                 $email_val,
                                                 $postal_address,
-                                                $finding_type = 'Name mismatch'
+                                                $finding_type = 'Name mismatch' // REASON
                                             );
                                         }
                                         $conn->prepare("UPDATE [$table_name] SET InValid = 'Y' WHERE id = ?")->execute([$docId]);
@@ -420,15 +405,13 @@ try {
                         [
                             $docId,
                             $branch_val,
-                            // $firstName,
-                            // $lastName,
                             $first_name,
                             $last_name,
                             $suffix,
                             $inv_val,
                             $mobile_val,
                             $email_val,
-                            '5K Below',
+                            '5K Below', // REASON
                             $postal_address
                         ]
                     );
@@ -442,8 +425,6 @@ try {
                         $overall,
                         $docId,
                         $branch_val,
-                        // $firstName,
-                        // $lastName,
                         $first_name,
                         $last_name,
                         $suffix,
@@ -451,7 +432,7 @@ try {
                         $mobile_val,
                         $email_val,
                         $postal_address,
-                        $finding_type = '5K Below'
+                        $finding_type = '5K Below' // REASON
                     );
                 }
             }

@@ -41,7 +41,6 @@ try {
     $iv = openssl_random_pseudo_bytes($iv_length);
 
     // ENCRYPT CSV DATA
-    // $encrypted_data = openssl_encrypt($csv_content, 'aes-256-cbc', $encryption_key, 0, $iv);
     $encrypted_data = openssl_encrypt($csv_content, 'aes-256-cbc', $encryption_key, 0, $iv);
     $encrypted_data_with_iv = base64_encode($iv . $encrypted_data);
 
@@ -69,7 +68,6 @@ try {
         'BACOLOD - MANDALAGAN' => 'BACOLOD DOS',
         'BUTUAN - M. CALO' => 'BUTUAN',
         'BUTUAN - JC AQUINO' => 'BUTUAN DOS',
-        // 'GENSAN' => 'GENERAL SANTOS',
         'KALIBO - REGALADO' => 'KALIBO',
         'KALIBO - ANDAGAO' => 'KALIBO DOS',
         'LAGAO GENERAL SANTOS' => 'LAGAO',
@@ -91,7 +89,6 @@ try {
         'ZAMBOANGA - VETERANS' => 'ZAMBOANGA DOS'
     ];
 
-    // $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?,?,?,?");
     $stmt = $conn->prepare("EXEC InsertResponses ?,?,?,?,?,?,?,?,?,?,?");
 
     $count = 0;
@@ -104,28 +101,27 @@ try {
     // Store mobile number => Cust_Id mappings
     $customerMap = [];
 
-    // Loop through each row and insert if not exists
+    $latestTimestampStmt = $conn->query("SELECT MAX(Timestamp) FROM responses");
+    $latestTimestamp = $latestTimestampStmt->fetchColumn();
+    if ($latestTimestamp) {
+        $latestTimestamp = new DateTime($latestTimestamp);
+    }
+
     foreach ($rows as $row) {
-        // foreach ($data as $row) {
-        // $timestamp = $row['Timestamp'];
-        // $branch    = $row['Branch Purchased'];
-        // $firstname = $row['First Name'];
-        // $lastname = $row['Last Name'];
-        // $invoice = $row['Invoice Number'];
-        // $mobile = $row['Mobile Number'];
-        // $email = $row['Email Address'];
-        // $postal = $row['Postal Address'];
-        // $consent1 = $row['Declaration and Consent'];
-        // $consent2 = $row['Data Collection Consent'];
-        // $consent3 = $row['Data Usage Consent'];
-        // $consent4 = $row['Data Sharing Consent'];
-        // $consent5 = $row['Data Protection and Retention Consent'];
-        // $consent6 = $row['Terms and Condition'];
+        $columns = str_getcsv($row);
 
-        $columns = str_getcsv($row); // Split row by commas to get columns
+        if (count($columns) < 13) continue;
 
-        if (count($columns) < 13) continue; // Skip incomplete rows
-        // if (count($row) < 13) continue; // Skip incomplete rows
+        $csvTimestamp = DateTime::createFromFormat('n/j/Y H:i:s', trim($columns[0]));
+
+        if (!$csvTimestamp) {
+            echo "Skipping invalid timestamp: {$columns[0]}<br>";
+            continue;
+        }
+
+        if ($latestTimestamp && $csvTimestamp <= $latestTimestamp) {
+            continue;
+        }
 
         $mobileNumber = trim($columns[5]);
 
@@ -203,7 +199,6 @@ try {
         $count++;
 
         echo "About to insert: {$columns[4]} | {$columns[5]}<br>";
-        // echo "✅ Data inserted for Invoice Number: {$columns[4]} (Branch: {$normalized_branch})\n";
     }
 
     $log = date("Y-m-d H:i:s") . " Imported: $count rows\n";
