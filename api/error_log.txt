@@ -2,3 +2,4 @@
 [2026-08-01 09:10:01] Error: [2] SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Error converting data type nvarchar to int. in C:\xampp\htdocs\anniversaya\api\generateTicket.php on line 176
 [2026-08-04 08:19:53] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [1231].  in C:\xampp\htdocs\anniversaya\api\responses.php on line 24
 [2026-08-04 08:20:16] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [1231].  in C:\xampp\htdocs\anniversaya\api\responses.php on line 24
+[2026-08-04 14:10:05] Error: [2] SQLSTATE[IMSSP]: There are no more rows in the active result set.  Since this result set is not scrollable, no more data may be retrieved. in C:\xampp\htdocs\anniversaya\api\generateTicket.php on line 199

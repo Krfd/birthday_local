@@ -15,9 +15,10 @@ try {
             Suffix,
             InvAmt,
             InvName,
-            InvDate,
+            -- InvDate,
             Mobile_Number,
-            Email
+            Email,
+            Findings
         FROM mismatch
         WHERE Exported IS NULL OR Exported = 0
         ORDER BY id ASC");
@@ -60,9 +61,10 @@ try {
         'Invoice_Number',
         'InvAmt',
         'InvoiceName',
-        'InvoiceDate',
+        // 'InvoiceDate',
         'Mobile_Number',
         'Email',
+        'Remarks',
         'Validated',
         'Invalid'
     ]);
@@ -83,9 +85,10 @@ try {
             $entry->Invoice_Number,
             $entry->InvAmt,
             $entry->InvName,
-            $entry->InvDate,
+            // $entry->InvDate,
             $entry->Mobile_Number,
             $entry->Email,
+            $entry->Findings,
             0,
             0
         ]);

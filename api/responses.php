@@ -107,6 +107,8 @@ try {
         $latestTimestamp = new DateTime($latestTimestamp);
     }
 
+    $today = (new DateTime())->format('Y-m-d');
+
     foreach ($rows as $row) {
         $columns = str_getcsv($row);
 
@@ -116,6 +118,11 @@ try {
 
         if (!$csvTimestamp) {
             echo "Skipping invalid timestamp: {$columns[0]}<br>";
+            continue;
+        }
+
+        if ($csvTimestamp->format('Y-m-d') === $today) {
+            echo "Skipping today's record: {$columns[4]} ({$columns[0]})<br>";
             continue;
         }
 
