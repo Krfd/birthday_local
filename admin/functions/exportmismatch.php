@@ -31,7 +31,7 @@ try {
 
     $stmtBatch = $conn->query("SELECT COALESCE(MAX(Batch), 100000) + 1 AS NextBatch
         FROM mismatch
-        WHERE Batch IS NOT NULL AND Exported = 0
+        -- WHERE Batch IS NOT NULL AND Exported = 0
     ");
 
     $batchNo = $stmtBatch->fetch(PDO::FETCH_ASSOC)['NextBatch'];
