@@ -386,45 +386,30 @@ try {
                                             ]
                                         );
 
-                                        // $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
-                                        // $exists_overall->execute([$id]);
-
-                                        // if (!$exists_overall->fetchColumn()) {
-                                        //     overall(
-                                        //         $overall,
-                                        //         $id,
-                                        //         $branchPurchased,
-                                        //         $firstName,
-                                        //         $lastName,
-                                        //         $suffix,
-                                        //         $customerInvoice,
-                                        //         $mobile,
-                                        //         $email,
-                                        //         $postal,
-                                        //         $finding_type = 'Name mismatch' // REASON
-                                        //     );
-                                        // }
-                                        $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$id]);
-                                    }
-
-                                    $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
+                                        $exists_overall = $conn->prepare("SELECT COUNT(*) FROM [$overall_findings_table] WHERE docId = ?");
                                         $exists_overall->execute([$id]);
 
                                         if (!$exists_overall->fetchColumn()) {
-                                            overall(
-                                                $overall,
-                                                $id,
-                                                $branchPurchased,
-                                                $firstName,
-                                                $lastName,
-                                                $suffix,
-                                                $customerInvoice,
-                                                $mobile,
-                                                $email,
-                                                $postal,
-                                                $finding_type = 'Name mismatch' // REASON
-                                            );
+                                            try {
+                                                overall(
+                                                    $overall,
+                                                    $id,
+                                                    $branchPurchased,
+                                                    $firstName,
+                                                    $lastName,
+                                                    $suffix,
+                                                    $customerInvoice,
+                                                    $mobile,
+                                                    $email,
+                                                    $postal,
+                                                    $finding_type = 'Name mismatch' // REASON
+                                                );
+                                            } catch (PDOException $e) {
+                                                errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
+                                            }
                                         }
+                                        $conn->prepare("UPDATE [$table_name] SET Validated = 'Y' WHERE id = ?")->execute([$id]);
+                                    }
                                 }
                             }
                         }

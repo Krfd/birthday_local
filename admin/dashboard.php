@@ -130,7 +130,19 @@
             <h5 class="mb-0 fw-semibold text-center text-dark">MISMATCH</h5>
             <div class="d-flex gap-1">
               <button type="button" class="btn btn-success" id="mismatchBtn">Export</button>
-              <button type="button" class="btn btn-dark" id="appendTicketsBtn">Migrate</button>
+              <?php
+
+              $recycleCheck = $conn->prepare("SELECT COUNT(*) FROM recycle WHERE Validated = 0");
+              $recycleCheck->execute();
+              $recycleCount = $recycleCheck->fetchColumn();
+
+              if ($recycleCount > 0):
+              ?>
+                <button type="button" class="btn btn-dark" id="appendTicketsBtn">Migrate <span class="badge bg-danger"><?php echo $recycleCount; ?></span></button>
+              <?php
+              endif;
+              ?>
+
             </div>
           </div>
           <div class="table-responsive" style="max-height: 500px">
