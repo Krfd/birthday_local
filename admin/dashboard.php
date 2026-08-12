@@ -667,6 +667,7 @@
             <table class="table datatables" id="invalidsTable">
               <thead>
                 <tr>
+                  <th class="text-center">#</th>
                   <th class="text-center">BRANCH</th>
                   <th>FIRST NAME</th>
                   <th>LAST NAME</th>
@@ -689,6 +690,7 @@
                     foreach ($getInvalids as $user) {
 
                       echo '<tr>
+                        <td class="text-center">' . $user->id . '</td> 
                         <td class="text-primary text-center">' . $user->Branch . '</td> 
                         <td class="text-primary fw-bold">' . $user->First_Name . '</td> 
                         <td class="text-primary fw-bold">' . $user->Last_Name . '</td> 
@@ -839,6 +841,7 @@
     new DataTable('#winnerTable');
     new DataTable('#userAccessTable');
     new DataTable('#mismatchTable');
+    new DataTable('#invalidsTable');
 
     const deptSelect = document.getElementById('dept');
     const regionContainer = document.getElementById('region-container');

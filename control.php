@@ -426,24 +426,57 @@
       winnerInterval = setInterval(loadWinners, 2000);
     });
 
-    // EXPORT CSV FILE FOR WINNERS
+    // // EXPORT CSV FILE FOR WINNERS
     document.getElementById("downloadCSV").addEventListener("click", function() {
-      const table = document.getElementById("winnerTable");
-      let csv = [];
-      for (let row of table.rows) {
-        let cols = Array.from(row.cells).map(cell =>
-          `"${cell.innerText.replace(/"/g, '""')}"`);
-        csv.push(cols.join(","));
-      }
 
-      const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
-      const encodedUri = encodeURI(csvContent);
+      // Get the DataTable instance
+      const table = $('#winnerTable').DataTable();
+
+      table.order([0, 'asc']).draw();
+
+      let csv = [];
+
+      // Get header cells
+      const headers = [];
+      $('#winnerTable thead th').each(function() {
+        headers.push(`"${$(this).text().trim().replace(/"/g, '""')}"`);
+      });
+
+      csv.push(headers.join(","));
+
+      // Get ALL rows from DataTables, not just visible rows
+      table.rows().every(function() {
+        const row = this.data();
+
+        const cols = Array.from(row).map(cell => {
+          // Remove HTML if the cell contains HTML
+          const text = $('<div>').html(cell).text().trim();
+
+          return `"${text.replace(/"/g, '""')}"`;
+        });
+
+        csv.push(cols.join(","));
+      });
+
+      const csvContent = csv.join("\r\n");
+
+      const blob = new Blob(
+        ["\uFEFF" + csvContent], {
+          type: "text/csv;charset=utf-8;"
+        }
+      );
+
+      const url = URL.createObjectURL(blob);
+
       const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "winners.csv");
+      link.href = url;
+      link.download = "winners.csv";
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
     });
   </script>
 </body>

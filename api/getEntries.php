@@ -4,18 +4,6 @@ include("../config/connection.php");
 
 try {
 
-    // $stmt = $conn->prepare("SELECT 
-    //     ce.cust_Id,
-    //     ce.First_Name,
-    //     ce.Last_Name,
-    //     ce.Ticket_Number,
-    //     ce.Branch
-    //     FROM current_entries ce
-    //     INNER JOIN raffle_entries re
-    //         ON ce.cust_Id = re.cust_Id
-    //     WHERE re.hasWon <> 1 OR ce.hasWon <> 1 OR ce.Excluded = 0
-    // ");
-
     $stmt = $conn->prepare("SELECT
             ce.cust_Id,
             ce.First_Name,
@@ -31,37 +19,13 @@ try {
         AND ISNULL(ce.Excluded, 0) = 0
     ");
 
-
-    // WHERE COALESCE(re.hasWon, 0) <> 1
-    //   AND COALESCE(ce.hasWon, 0) <> 1
-    //   AND COALESCE(ce.Excluded, 0) = 0;
+    // OFFICIAL
+    // re . hasWon = 0
+    //     and ce . hasWon = 0
+    //     and ce . Excluded = 0
 
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // $users = [];
-
-    // foreach ($rows as $row) {
-    //     $name = trim($row['First_Name'] . ' ' . $row['Last_Name']);
-    //     $ticket = (int)$row['Ticket_Number'];
-    //     $cust_Id = $row['cust_Id'];
-
-    //     if (!isset($users[$name])) {
-    //         $users[$name] = [];
-    //     }
-    //     $users[$name][] = $ticket;
-    // }
-
-    // $result = [];
-    // foreach ($users as $name => $ticket) {
-    //     $result[] = [
-    //         'customerName' => $name,
-    //         'ticketNumbers' => $ticket,
-    //         'cust_id' => $cust_Id
-    //     ];
-    // }
-
-    // echo json_encode($result);
 
     $users = [];
 
