@@ -18,3 +18,13 @@
  in C:\xampp\htdocs\raffle\api\responses.php on line 97
 [2026-08-08 16:08:05] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [64].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
 [2026-08-09 16:17:48] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [64].  in C:\xampp\htdocs\raffle\api\generateTicket.php on line 52
+[2026-08-15 09:25:38] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [53].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
+[2026-08-15 09:26:08] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [53].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
+[2026-08-15 09:28:37] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [64].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
+[2026-08-15 09:34:44] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [53].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
+[2026-08-15 09:37:43] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  in C:\xampp\htdocs\raffle\api\responses.php on line 24
+[2026-08-15 10:23:54] Error: [2] file_get_contents(https://docs.google.com/spreadsheets/d/1qflQZPkC22AnoB9EtC4PurYV2R4-6mzfwdQVBeEhtro/export?format=csv&amp;gid=1195666039): Failed to open stream: HTTP request failed! in C:\xampp\htdocs\raffle\api\responses.php on line 29
+[2026-08-15 10:23:54] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An existing connection was forcibly closed by the remote host.
+ in C:\xampp\htdocs\raffle\api\responses.php on line 97
+[2026-08-15 10:39:06] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An existing connection was forcibly closed by the remote host.
+ in C:\xampp\htdocs\raffle\api\responses.php on line 97
