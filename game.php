@@ -558,41 +558,136 @@
       submitWinnerDetails(winnerName, winnerTicket, winnerCustId, winnerBranch);
     }
 
+    // function showConfetti(winnerName, winnerTicket) {
+    //   const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
+    //   const end = Date.now() + duration;
+
+    //   const colors = ["#FFF8DC", "#960a03"];
+    //   const confettiColors =
+    //     currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] :
+    //     colors;
+
+    //   (function frame() {
+
+    //     // confetti({
+    //     //   particleCount: 8,
+    //     //   angle: 60,
+    //     //   spread: 60,
+    //     //   origin: {
+    //     //     x: 0
+    //     //   },
+    //     //   colors: confettiColors,
+    //     // });
+
+    //     // confetti({
+    //     //   particleCount: 8,
+    //     //   angle: 120,
+    //     //   spread: 60,
+    //     //   origin: {
+    //     //     x: 1
+    //     //   },
+    //     //   colors: confettiColors,
+    //     // });
+
+    //     // Right
+    //     confetti({
+    //       particleCount: 6,
+    //       angle: 120,
+    //       spread: 70,
+    //       origin: {
+    //         x: 1,
+    //         y: 0.6
+    //       },
+    //       colors: confettiColors,
+    //     });
+
+    //     // Top Left
+    //     confetti({
+    //       particleCount: 5,
+    //       angle: 45,
+    //       spread: 55,
+    //       origin: {
+    //         x: 0.15,
+    //         y: 0
+    //       },
+    //       colors: confettiColors,
+    //     });
+
+    //     // Top Right
+    //     confetti({
+    //       particleCount: 5,
+    //       angle: 135,
+    //       spread: 55,
+    //       origin: {
+    //         x: 0.85,
+    //         y: 0
+    //       },
+    //       colors: confettiColors,
+    //     });
+
+    //     // Top Center (falls downward)
+    //     confetti({
+    //       particleCount: 10,
+    //       angle: 90,
+    //       spread: 120,
+    //       origin: {
+    //         x: 0.5,
+    //         y: 0
+    //       },
+    //       colors: confettiColors,
+    //     });
+
+    //     if (Date.now() < end) {
+    //       requestAnimationFrame(frame);
+    //     } else {
+    //       // ✅ Reset raffle state
+    //       isRolling = false;
+    //       hasStarted = false;
+    //       finalInvoice = "";
+
+    //       excludedCustomerNames.add(winnerName);
+
+    //       // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
+    //       fetch("./sync.php", {
+    //         method: "POST",
+    //         headers: {
+    //           "Content-Type": "application/json"
+    //         },
+    //         body: JSON.stringify({
+    //           status: "done",
+    //           finalInvoice,
+    //           excludedTicketNumbers: Array.from(excludedTicketNumbers),
+    //           excludedCustomerNames: Array.from(excludedCustomerNames),
+    //           region: currentRegion,
+    //           category: currentCategory,
+    //           prize: currentPrize,
+    //           // branch: currentBranch,
+    //         }),
+    //       });
+    //     }
+    //   })();
+    //   sessionStorage.clear();
+    //   sessionStorage.removeItem(`raffle_refreshed_for_${finalInvoice}`);
+    // }
     function showConfetti(winnerName, winnerTicket) {
       const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
       const end = Date.now() + duration;
-
       const colors = ["#FFF8DC", "#960a03"];
-      const confettiColors =
-        currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] :
-        colors;
-
+      const confettiColors = currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] : colors;
       (function frame() {
-
-        // confetti({
-        //   particleCount: 8,
-        //   angle: 60,
-        //   spread: 60,
-        //   origin: {
-        //     x: 0
-        //   },
-        //   colors: confettiColors,
-        // });
-
-        // confetti({
-        //   particleCount: 8,
-        //   angle: 120,
-        //   spread: 60,
-        //   origin: {
-        //     x: 1
-        //   },
-        //   colors: confettiColors,
-        // });
-
-        // Right
         confetti({
-          particleCount: 6,
-          angle: 120,
+          particleCount: 8,
+          angle: 45,
+          spread: 70,
+          origin: {
+            x: 0,
+            y: 0.6
+          },
+          colors: confettiColors,
+        });
+        confetti({
+          particleCount: 8,
+          angle: 135,
           spread: 70,
           origin: {
             x: 1,
@@ -600,32 +695,26 @@
           },
           colors: confettiColors,
         });
-
-        // Top Left
         confetti({
-          particleCount: 5,
-          angle: 45,
-          spread: 55,
+          particleCount: 6,
+          angle: 60,
+          spread: 70,
           origin: {
             x: 0.15,
             y: 0
           },
           colors: confettiColors,
         });
-
-        // Top Right
         confetti({
-          particleCount: 5,
-          angle: 135,
-          spread: 55,
+          particleCount: 6,
+          angle: 120,
+          spread: 70,
           origin: {
             x: 0.85,
             y: 0
           },
           colors: confettiColors,
         });
-
-        // Top Center (falls downward)
         confetti({
           particleCount: 10,
           angle: 90,
@@ -636,18 +725,13 @@
           },
           colors: confettiColors,
         });
-
         if (Date.now() < end) {
           requestAnimationFrame(frame);
         } else {
-          // ✅ Reset raffle state
           isRolling = false;
           hasStarted = false;
           finalInvoice = "";
-
           excludedCustomerNames.add(winnerName);
-
-          // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
           fetch("./sync.php", {
             method: "POST",
             headers: {
@@ -661,7 +745,6 @@
               region: currentRegion,
               category: currentCategory,
               prize: currentPrize,
-              // branch: currentBranch,
             }),
           });
         }
