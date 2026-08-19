@@ -1,1 +1,2 @@
 [2026-08-07 20:56:00] Error: [2] SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection in C:\xampp\htdocs\raffle\config\config.php on line 24
+[2026-08-19 08:58:43] Error: [2] Undefined array key "id" in C:\xampp\htdocs\anniversaya\config\config.php on line 36
