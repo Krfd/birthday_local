@@ -28,3 +28,13 @@
  in C:\xampp\htdocs\raffle\api\responses.php on line 97
 [2026-08-15 10:39:06] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An existing connection was forcibly closed by the remote host.
  in C:\xampp\htdocs\raffle\api\responses.php on line 97
+[2026-08-21 16:04:50] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ in C:\xampp\htdocs\raffle\api\responses.php on line 144
+[2026-08-21 16:06:08] Error: [2] file_get_contents(): php_network_getaddresses: getaddrinfo for doc-14-30-sheets.googleusercontent.com failed: No such host is known.  in C:\xampp\htdocs\raffle\api\responses.php on line 29
+[2026-08-21 16:06:08] Error: [2] file_get_contents(https://docs.google.com/spreadsheets/d/1qflQZPkC22AnoB9EtC4PurYV2R4-6mzfwdQVBeEhtro/export?format=csv&amp;gid=1195666039): Failed to open stream: php_network_getaddresses: getaddrinfo for doc-14-30-sheets.googleusercontent.com failed: No such host is known.  in C:\xampp\htdocs\raffle\api\responses.php on line 29
+[2026-08-21 16:23:25] Error: [2] file_get_contents(): SSL: An existing connection was forcibly closed by the remote host in C:\xampp\htdocs\raffle\api\responses.php on line 29
+[2026-08-21 16:23:25] Error: [2] file_get_contents(): SSL: An existing connection was forcibly closed by the remote host in C:\xampp\htdocs\raffle\api\responses.php on line 29
+[2026-08-21 16:23:25] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An established connection was aborted by the software in your host machine.
+ in C:\xampp\htdocs\raffle\api\generateTicket.php on line 342
+[2026-08-21 16:23:25] Error: [2] SQLSTATE[08S01]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: An existing connection was forcibly closed by the remote host.
+ in C:\xampp\htdocs\raffle\api\responses.php on line 97
