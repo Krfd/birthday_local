@@ -7,12 +7,6 @@
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = file_get_contents('php://input');
 
-        // file_put_contents(
-        //     "payload.log",
-        //     date("Y-m-d H:i:s") . " " . file_get_contents("php://input") . PHP_EOL,
-        //     FILE_APPEND
-        // );
-
         $decoded = json_decode($data, true);
 
         $existing = file_exists($stateFile)

@@ -19,11 +19,6 @@ try {
         AND ISNULL(ce.Excluded, 0) = 0
     ");
 
-    // OFFICIAL
-    // re . hasWon = 0
-    //     and ce . hasWon = 0
-    //     and ce . Excluded = 0
-
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

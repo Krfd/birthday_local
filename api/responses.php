@@ -28,13 +28,6 @@ try {
     $csv_url = 'https://docs.google.com/spreadsheets/d/1qflQZPkC22AnoB9EtC4PurYV2R4-6mzfwdQVBeEhtro/export?format=csv&gid=1195666039';
     $csv_content = file_get_contents($csv_url);
 
-    // ALTERNATIVE CSV FETCHING
-    // $csv_url = 'https://script.google.com/macros/s/AKfycbzoDLtQaRWGdyv7DVnvBHL4GC8X2TcUButZJCLodJfZoSMXQGFhMYOZEtsd02-J27AS/exec';
-    // $csv_content = mb_convert_encoding(file_get_contents($csv_url), 'UTF-8', 'auto');
-    // if (!$csv_content) {
-    //     die("Failed to fetch CSV from Google Apps Script");
-    // }
-
     // DEFINE ENCRYPTION KEY AND INITIALIZATION VECTOR
     $encryption_key = 'ENCRYPTING CUSTOMERS DATA';
     $iv_length = openssl_cipher_iv_length('aes-256-cbc');
@@ -44,7 +37,6 @@ try {
     $encrypted_data = openssl_encrypt($csv_content, 'aes-256-cbc', $encryption_key, 0, $iv);
     $encrypted_data_with_iv = base64_encode($iv . $encrypted_data);
 
-    // echo 'Encrypted data: ' . $encrypted_data_with_iv . "\n";
 
     // DECRYPT CSV DATA
     $decoded_data = base64_decode($encrypted_data_with_iv);
@@ -54,8 +46,6 @@ try {
     $encrypted_data_from_storage = substr($decoded_data, $iv_length);
 
     $decrypted_data = openssl_decrypt($encrypted_data_from_storage, 'aes-256-cbc', $encryption_key, 0, $iv_from_data);
-
-    // echo "\nDecrypted Data: " . $decrypted_data . "\n";
 
     if ($decrypted_data === false) die("❌ Error fetching decrypted data.");
 

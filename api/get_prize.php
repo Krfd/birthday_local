@@ -15,7 +15,7 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 set_error_handler("errorHandler");
 
 $servername = "192.168.101.68";
-$db = "ANNIVERSAYA";
+$db = "BIRTHDAY_RAFFLE";
 $username = "sa";
 $password = "SB1Admin";
 
@@ -29,9 +29,7 @@ try {
     $category = $_GET['category'] ?? '';
 
     if ($location && $category) {
-        // $stmt = $conn->prepare("SELECT product, brand, model FROM prizes WHERE location = :location AND category = :category");
         $stmt = $conn->prepare("EXEC SelectPrize ?,?");
-        // $stmt->execute([':location' => $location, ':category' => $category]);
         $stmt->execute([$location, $category]);
         $prize = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -40,7 +38,6 @@ try {
 
         $location = strtoupper($location);
 
-        // $branch_categories = $conn->prepare("SELECT branch FROM branch_category WHERE area = ?");
         $branch_categories = $conn->prepare("EXEC SelectBranch ?");
         $branch_categories->execute([$location]);
 
@@ -52,8 +49,8 @@ try {
                 $placeholders = implode(',', array_fill(0, count($branches), '?'));
 
                 $insertSql = "INSERT INTO current_entries 
-                (Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported, hasWon)
-                SELECT Ticket_Number, Counter, cust_Id, DocNum, Branch, First_Name, Last_Name, Invoice_Number, Mobile_Number, Email, Excluded, Exported, hasWon
+                (Ticket_Number, Counter, cust_Id, Branch, First_Name, Last_Name, Mobile_Number, Excluded, Exported, hasWon)
+                SELECT Ticket_Number, Counter, cust_Id, Branch, First_Name, Last_Name, Mobile_Number, Excluded, Exported, hasWon
                 FROM raffle_entries
                 WHERE Branch IN ($placeholders)";
 
@@ -66,9 +63,6 @@ try {
                 errorHandler(E_WARNING, $e->getMessage(), $e->getFile(), $e->getLine());
             }
         }
-
-        // $file = 'branches.txt';
-        // file_put_contents($file, implode(PHP_EOL, $branches));
 
         echo json_encode($prize ?: []);
     } else {

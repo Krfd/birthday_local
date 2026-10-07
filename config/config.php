@@ -16,7 +16,7 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 set_error_handler("errorHandler");
 
 $servername = "192.168.101.68";
-$db = "ANNIVERSAYA";
+$db = "BIRTHDAY_RAFFLE";
 $username = "sa";
 $password = "SB1Admin";
 
@@ -46,13 +46,6 @@ try {
         foreach ($getData as $person) {
             $userId = $person->id;
             $user_name = $person->username;
-            $dept = $person->dept;
-            if (is_array($person->region)) {
-                $region = $person->region;
-            } else {
-                $region = '';
-            }
-            $region = $person->region;
             $pass = $person->password;
         }
     }

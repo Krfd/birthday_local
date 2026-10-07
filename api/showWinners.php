@@ -10,7 +10,6 @@ header('Content-Type: application/json');
 
 try {
 
-    // $winners = $conn->prepare("SELECT * FROM winners ORDER BY id DESC");
     $winners = $conn->prepare("EXEC ShowWinners");
     $winners->execute();
 

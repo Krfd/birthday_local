@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8" />
 
-  <title>The Greatest Anniversary Appliance Giveaway</title>
+  <title>Birthday Raffle</title>
   <link rel="icon" href="assets/img/logo.png" />
   <link rel="stylesheet" href="css/bootstrap.min.css" />
   <style>
@@ -42,7 +42,7 @@
 
     #invoice-display {
       font-size: 4em;
-      color: #960a03;
+      color: #ce051d;
     }
 
     .digit.roll {
@@ -51,7 +51,7 @@
 
     .digit.rolling {
       animation: rollBounce 0.2s ease-out;
-      border: 5px solid #960a03 !important;
+      border: 5px solid #ce051d !important;
     }
 
     .digit:hover {
@@ -82,7 +82,7 @@
 
     .digit.locked {
       animation: bounceIn 0.4s ease;
-      border: 5px solid #960a03 !important;
+      border: 5px solid #ce051d !important;
     }
 
     @keyframes bounceIn {
@@ -119,7 +119,7 @@
       font-weight: bold;
       text-align: center;
       transition: all 0.2s ease;
-      border: 5px solid #960a03 !important;
+      border: 5px solid #ce051d !important;
       position: relative;
       overflow: hidden;
       line-height: 100px;
@@ -157,8 +157,8 @@
       left: 50%;
       transform: translateX(-50%);
       color: transparent;
-      -webkit-text-stroke: 20px #960a03;
-      text-stroke: 20px #960a03;
+      -webkit-text-stroke: 20px #ce051d;
+      text-stroke: 20px #ce051d;
       z-index: -1;
       pointer-events: none;
       white-space: nowrap;
@@ -171,8 +171,8 @@
       left: 50%;
       transform: translateX(-50%);
       color: transparent;
-      -webkit-text-stroke: 20px #960a03;
-      text-stroke: 20px #960a03;
+      -webkit-text-stroke: 20px #ce051d;
+      text-stroke: 20px #ce051d;
       z-index: -1;
       pointer-events: none;
       white-space: nowrap;
@@ -187,12 +187,12 @@
         <h2 class="pt-5" style="font-size: clamp(1.5rem, 5vw, 5rem); text-align: center;">
           <span class="fw-bold font" data-text="E-TICKET NUMBER">E-TICKET NUMBER</span>
         </h2>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
-        <span class="digit border rounded-3 shadow-sm px-3" style="color: #960a03">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
+        <span class="digit border rounded-3 shadow-sm px-3" style="color: #ce051d">?</span>
       </div>
     </div>
     <div class="mt-5">
@@ -206,7 +206,6 @@
   </div>
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/canvas-confetti.js"></script>
-  <!-- <script type="module" src="js/start.js"></script> -->
 
   <script>
     let invoices = [];
@@ -270,13 +269,6 @@
             branch: u.branch
           }));
 
-        // users = data
-        //   .filter((u) => !excludedCustomerNames.has(u.customerName))
-        //   .map((u) => ({
-        //     customerName: u.customerName,
-        //     ticketNumbers: u.ticketNumbers,
-        //     cust_id: u.cust_id
-        //   }));
         console.log("PROCESSED USERS:", users);
 
         invoices = users.flatMap((user) => user.ticketNumbers.map(String));
@@ -313,7 +305,7 @@
 
         console.log("🔁 Refreshing before raffle starts...");
         location.reload();
-        return; // STOP raffle, reload happens
+        return;
       }
 
       if (isRolling || invoices.length === 0) return;
@@ -400,11 +392,9 @@
       function rollNextDigit() {
         const digits = document.querySelectorAll("#invoice-display .digit");
         const digitCount = digits.length;
-        // const totalRolls = 20;
         const totalRolls = 15;
         const isGrandPrize = currentCategory === "Grand Prize";
         console.log(`CURRENT CATEGORY: ${currentCategory}`)
-        // const totalDuration = isGrandPrize ? 5000 : 3000;
         const totalDuration =
           isGrandPrize ?
           5000 :
@@ -505,13 +495,6 @@
       const winnerUser = users.find((user) =>
         user.ticketNumbers.map(String).includes(String(winnerTicket)),
       );
-      // const winnerTicket = String(finalInvoice);
-
-      // const winnerUser = users.find((user) =>
-      //   user.ticketNumbers
-      //   .map(String)
-      //   .includes(winnerTicket)
-      // );
 
       let winnerName = winnerUser ? winnerUser.customerName : "";
       winnerName = winnerName
@@ -526,9 +509,6 @@
         console.error("Error: Winner's name is undefined or invalid.");
       }
 
-      // UPDATES THE SET IN MEMORY TO SURE:
-      // THEIR TICKETS CAN'T WIN AGAIN
-      // THEIR NAME WON'T BE SELECTED AGAIN
       if (winnerUser) {
         winnerUser.ticketNumbers.forEach((ticket) =>
           excludedTicketNumbers.add(String(ticket)),
@@ -540,16 +520,12 @@
         winnerBranch = winnerUser.branch
 
         users = users.filter((u) => u.customerName !== winnerUser.customerName);
-        // users = users.filter(
-        //   (user) => user.cust_id !== winnerCustId
-        // );
+
         invoices = invoices.filter(
           (ticket) => !winnerUser.ticketNumbers.includes(parseInt(ticket)),
         );
         names = users.map((u) => u.customerName);
       }
-      console.log(`UPDATED CUSTOMER ID: ${winnerCustId}`)
-      console.log(`UPDATED CUSTOMER BRANCH: ${winnerBranch}`)
 
       const winnerDisplay = document.getElementById("winner-display");
 
@@ -558,122 +534,11 @@
       submitWinnerDetails(winnerName, winnerTicket, winnerCustId, winnerBranch);
     }
 
-    // function showConfetti(winnerName, winnerTicket) {
-    //   const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
-    //   const end = Date.now() + duration;
-
-    //   const colors = ["#FFF8DC", "#960a03"];
-    //   const confettiColors =
-    //     currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] :
-    //     colors;
-
-    //   (function frame() {
-
-    //     // confetti({
-    //     //   particleCount: 8,
-    //     //   angle: 60,
-    //     //   spread: 60,
-    //     //   origin: {
-    //     //     x: 0
-    //     //   },
-    //     //   colors: confettiColors,
-    //     // });
-
-    //     // confetti({
-    //     //   particleCount: 8,
-    //     //   angle: 120,
-    //     //   spread: 60,
-    //     //   origin: {
-    //     //     x: 1
-    //     //   },
-    //     //   colors: confettiColors,
-    //     // });
-
-    //     // Right
-    //     confetti({
-    //       particleCount: 6,
-    //       angle: 120,
-    //       spread: 70,
-    //       origin: {
-    //         x: 1,
-    //         y: 0.6
-    //       },
-    //       colors: confettiColors,
-    //     });
-
-    //     // Top Left
-    //     confetti({
-    //       particleCount: 5,
-    //       angle: 45,
-    //       spread: 55,
-    //       origin: {
-    //         x: 0.15,
-    //         y: 0
-    //       },
-    //       colors: confettiColors,
-    //     });
-
-    //     // Top Right
-    //     confetti({
-    //       particleCount: 5,
-    //       angle: 135,
-    //       spread: 55,
-    //       origin: {
-    //         x: 0.85,
-    //         y: 0
-    //       },
-    //       colors: confettiColors,
-    //     });
-
-    //     // Top Center (falls downward)
-    //     confetti({
-    //       particleCount: 10,
-    //       angle: 90,
-    //       spread: 120,
-    //       origin: {
-    //         x: 0.5,
-    //         y: 0
-    //       },
-    //       colors: confettiColors,
-    //     });
-
-    //     if (Date.now() < end) {
-    //       requestAnimationFrame(frame);
-    //     } else {
-    //       // ✅ Reset raffle state
-    //       isRolling = false;
-    //       hasStarted = false;
-    //       finalInvoice = "";
-
-    //       excludedCustomerNames.add(winnerName);
-
-    //       // UPDATES EXCLUSIONS TO RAFFLE_STATE.JSON VIA SYNC.PHP
-    //       fetch("./sync.php", {
-    //         method: "POST",
-    //         headers: {
-    //           "Content-Type": "application/json"
-    //         },
-    //         body: JSON.stringify({
-    //           status: "done",
-    //           finalInvoice,
-    //           excludedTicketNumbers: Array.from(excludedTicketNumbers),
-    //           excludedCustomerNames: Array.from(excludedCustomerNames),
-    //           region: currentRegion,
-    //           category: currentCategory,
-    //           prize: currentPrize,
-    //           // branch: currentBranch,
-    //         }),
-    //       });
-    //     }
-    //   })();
-    //   sessionStorage.clear();
-    //   sessionStorage.removeItem(`raffle_refreshed_for_${finalInvoice}`);
-    // }
     function showConfetti(winnerName, winnerTicket) {
       const duration = currentCategory === "Grand Prize" ? 5000 : 3000;
       const end = Date.now() + duration;
-      const colors = ["#FFF8DC", "#960a03"];
-      const confettiColors = currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#960a03"] : colors;
+      const colors = ["#FFF8DC", "#ce051d"];
+      const confettiColors = currentCategory === "Grand Prize" ? ["#FFD700", "#FFA500", "#FFF8DC", "#ce051d"] : colors;
       (function frame() {
         confetti({
           particleCount: 8,

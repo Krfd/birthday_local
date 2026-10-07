@@ -167,7 +167,7 @@
               <tr>
                 <th>#</th>
                 <th>E-Ticket</th>
-                <th>CUSTOMER</th>
+                <th>NAME</th>
                 <th>BRANCH</th>
                 <th>AREA</th>
                 <th>CATEGORY</th>
