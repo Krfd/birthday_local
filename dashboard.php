@@ -55,115 +55,6 @@
         </div>
     </div>
 
-    <!-- UPDATE ACCOUNT -->
-    <div
-        class="modal p-4 py-md-5 fade"
-        tabindex="-1"
-        role="dialog"
-        aria-hidden="true"
-        id="update">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content rounded-3 shadow">
-                <div class="modal-body p-4">
-                    <div class="d-flex">
-                        <h5 class="mb-0 fw-semibold text-center">Update Password</h5>
-                        <button class="ms-auto btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <hr>
-                    <form method="post" class="mt-3" id="updatePasswordForm">
-                        <input type="hidden" name="user_id" value="<?php echo $userId ?>" required>
-                        <div class="mt-3 d-flex flex-column gap-3 w-auto">
-                            <div class="col">
-                                <label for="old" class="form-label fw-semibold">Old Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="old" id="old" maxlength="20" required>
-                            </div>
-                            <div class="col">
-                                <label for="new" class="form-label fw-semibold">New Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="new" id="new" maxlength="20" required>
-                            </div>
-                            <div class="col">
-                                <label for="confirm" class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="confirm" id="confirm" maxlength="20" required>
-                            </div>
-                        </div>
-                        <button
-                            type="submit"
-                            class="btn btn-lg btn-link fs-6 text-decoration-none col-6 pt-3 m-0 rounded-0 d-block mx-auto">
-                            <strong>Save</strong>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MISMATCHED RECORDS -->
-    <?php
-    $customers = $conn->prepare("SELECT * FROM mismatch WHERE Updated = 0 ORDER BY id DESC");
-    $customers->execute();
-
-    $getCustomers = $customers->fetchAll(PDO::FETCH_OBJ);
-    if ($getCustomers) {
-        foreach ($getCustomers as $customer) {
-
-            $id = $customer->id;
-            $docId = $customer->docId;
-            $cus_fname = $customer->First_Name;
-            $cus_lname = $customer->Last_Name;
-            $suffix = $customer->Suffix;
-            $cus_inv = $customer->Invoice_Number;
-            $cus_branch = $customer->Branch;
-            $cus_findings = $customer->Findings;
-
-            echo '<div class="modal fade p-4" id="user_' . $id . '">
-              <div class="modal-dialog" role="document">
-                  <div class="modal-content rounded-3 shadow">
-                      <div class="modal-body p-4">
-                        <div class="d-flex align-items-center">
-                            <h5 class="text-center fw-bold text-secondary-emphasis text-center">Update Customer</h5>
-                            <button class="btn btn-sm btn-close ms-auto" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form id="updateMismatch_' . $id . '" class="mt-3 mb-0" method="post">
-                            <input type="hidden" name="first" value="' . $cus_fname . '"/>
-                            <input type="hidden" name="last" value="' . $cus_lname . '"/>
-                            <input type="hidden" name="branch" value="' . $cus_branch . '"/>
-                            <input type="hidden" name="docId" value="' . $docId . '"/>
-                            <input type="hidden" name="user_id" value="' . $userId . '"/>
-                            <input type="hidden" name="user_dept" value="' . $dept . '"/>
-                            <input type="hidden" name="inv" value="' . $cus_inv . '"/>
-                            <input type="hidden" name="username" value="' . $user_name . '"/>';
-
-            if ($cus_findings === "name") {
-                echo '<div class="mt-3">
-                                <label for="fname_' . $id . '" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="fname" id="fname_' . $id . '" required autocomplete="off" value="' . $cus_fname . '">
-                            </div>
-                            <div class="mt-3 d-flex justify-content-between gap-3">
-                                <div>
-                                    <label for="lname_' . $id . '" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="lname" id="lname_' . $id . '" required autocomplete="off" value="' . $cus_lname . '">
-                                </div>
-                                <div>
-                                    <label for="suffix_' . $id . '" class="form-label">Suffix </label>
-                                    <input type="text" class="form-control" name="suffix" id="suffix_' . $id . '" autocomplete="off" value="' . $suffix . '">
-                                </div>
-                            </div>';
-            }
-
-            echo ' <div class="flex nowrap p-0">
-                                <button type="submit" class="btn d-block mx-auto btn-link fs-6 text-decoration-none m-0 mt-3 rounded-0" id="submit_' . $id . '">
-                                    <strong>Update</strong>
-                                </button>
-                            </div>
-                        </form>
-                      </div>
-                  </div>
-              </div>
-          </div>';
-        }
-    }
-    ?>
-
     <div class="position-relative py-3 mt-3">
         <div class="position-absolute start-0 m-3 ps-2">
             <button id="logout-btn" style="height: 50px; width: 50px" class="btn border border-danger bg-danger-subtle btn-sm position-absolute rounded-5 top-0 start-0 m-3" title="Logout" data-bs-toggle="modal" data-bs-target="#logout">
@@ -186,10 +77,8 @@
                             <th>Branch</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Invoice Number</th>
                             <th>Mobile Number</th>
                             <th>Email</th>
-                            <th>Remarks</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -225,7 +114,6 @@
                                         WHERE r.Branch = m.Branch 
                                         AND r.First_Name = m.First_Name 
                                         AND r.Last_Name = m.Last_Name 
-                                        AND r.Invoice_Number = m.Invoice_Number 
                                         AND r.Mobile_Number = m.Mobile_Number 
                                         AND r.Email = m.Email
                                     ) 
@@ -245,36 +133,24 @@
                                 $branch = $entry->Branch;
                                 $first = $entry->First_Name;
                                 $last = $entry->Last_Name;
-                                $inv = $entry->Invoice_Number;
                                 $mobile = $entry->Mobile_Number;
                                 $email =  $entry->Email;
-                                $remarks =  $entry->Findings;
-
-                                if ($remarks === "amount") {
-                                    $remarks = "Exceeded amount to 100,000";
-                                } else if ($remarks === "cancellation") {
-                                    $remarks = "Has cancelled invoice";
-                                } else if ($remarks === "name") {
-                                    $remarks = "Name mismatched";
-                                }
 
                                 echo '<tr>
                                     <td>' . $id . '</td>
                                     <td>' . $branch . '</td>
                                     <td>' . $first . '</td>
                                     <td>' . $last . '</td>
-                                    <td>' . $inv . '</td>
                                     <td>' . $mobile . '</td>
                                     <td>' . $email . '</td>
-                                    <td>' . $remarks . '</td>
                                     <td>';
 
                                 if ($entry->Findings == "amount") {
-                                    echo '<button class="btn btn-success btn-sm amount" data-id="' . $id . '" title="Approve exceeded amount?" data-branch="' . $branch . '" data-inv="' . $inv . '">
+                                    echo '<button class="btn btn-success btn-sm amount" data-id="' . $id . '" title="Approve exceeded amount?" data-branch="' . $branch . '">
                                             <i class="bi bi-check-lg"></i>
                                         </button>';
                                 } else if ($entry->Findings === "cancellation") {
-                                    echo '<button class="btn btn-danger btn-sm cancellation text-white" data-id="' . $id . '" title="Approve entry?" data-branch="' . $branch . '" data-inv="' . $inv . '">
+                                    echo '<button class="btn btn-danger btn-sm cancellation text-white" data-id="' . $id . '" title="Approve entry?" data-branch="' . $branch . '">
                                             <i class="bi bi-check-lg"></i>
                                         </button>';
                                 } else {
@@ -298,8 +174,6 @@
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/datatables/dataTables.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
-    <script src="js/updateMismatch.js"></script>
-    <script src="js/update.js"></script>
     <script>
         new DataTable('#mismatch');
 
