@@ -15,10 +15,10 @@ set_error_handler("errorHandler");
 
 date_default_timezone_set('Asia/Manila');
 
-$servername = "192.168.101.68";
+$servername = "SOFTDEV-KARL\SQLEXPRESS";
 $db = "ANNIVERSAYA";
-$username = "sa";
-$password = "SB1Admin";
+$username = "";
+$password = "";
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);

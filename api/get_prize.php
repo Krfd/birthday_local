@@ -14,10 +14,10 @@ function errorHandler($errno, $errstr, $errfile, $errline)
 }
 set_error_handler("errorHandler");
 
-$servername = "192.168.101.68";
+$servername = "SOFTDEV-KARL\SQLEXPRESS";
 $db = "BIRTHDAY_RAFFLE";
-$username = "sa";
-$password = "SB1Admin";
+$username = "";
+$password = "";
 
 try {
     $conn = new PDO("sqlsrv:server=$servername;database=$db;TrustServerCertificate=true", $username, $password);
